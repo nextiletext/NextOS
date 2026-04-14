@@ -2,10 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Pro Max Suite</title>
+    <title>NextOS - Locked Edition</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --bg: linear-gradient(135deg, #0d1f3c 0%, #1a1035 100%); --brightness: 1; }
+        /* 1. SET PERMANENT IMAGE HERE */
+        :root { 
+            --bg: url(https://chatgpt.com/backend-api/estuary/content?id=file_00000000df7471fd8d9f3de6539e04d3&ts=493386&p=fs&cid=1&sig=68195d6a6b778456e244f80a43e9444f5455c9acb620224c1b563dc43abdfbda&v=0); 
+            --brightness: 1; 
+        }
+        
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-user-select: none; user-select: none; }
         body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; }
         
@@ -15,7 +20,7 @@
             filter: brightness(var(--brightness));
         }
 
-        /* Top Menubar */
+        /* Top Menubar with requested buttons */
         #menubar {
             position: absolute; top: 0; width: 100%; height: 28px;
             background: rgba(20, 20, 25, 0.7); backdrop-filter: blur(30px);
@@ -33,10 +38,9 @@
             box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column;
             will-change: transform; transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), opacity 0.3s;
         }
-        .win.dragging { transition: none !important; }
         .win.genie-hide { transform: scale(0) translateY(600px); opacity: 0; pointer-events: none; }
 
-        /* Traffic Lights - Horizontal with Icons */
+        /* Horizontal Traffic Lights */
         .win-bar { height: 38px; display: flex; align-items: center; padding: 0 12px; cursor: move; background: rgba(255, 255, 255, 0.03); }
         .traffic-lights { display: flex; gap: 8px; margin-right: 15px; }
         .tb { width: 12px; height: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; color: transparent; cursor: pointer; }
@@ -45,13 +49,9 @@
 
         .win-content { flex: 1; overflow: auto; color: white; background: #1c1c1e; }
 
-        /* Calculator Styles */
+        /* App Layouts */
         .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); height: 100%; background: #333; }
         .c-btn { border: 0.1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
-        .c-btn:active { background: #555; }
-        .c-op { background: #ff9f0a; }
-
-        /* Calendar Styles */
         .cal-nav { display: flex; justify-content: space-between; padding: 10px; align-items: center; }
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 10px; }
         .cal-day { padding: 10px; text-align: center; border-radius: 4px; }
@@ -93,19 +93,11 @@
 
     const apps = {
         browser: { title: 'Browser', w: 800, h: 500, html: `<iframe src="https://www.google.com/search?igu=1" style="width:100%; height:100%; border:none;"></iframe>` },
-        calc: { title: 'Calculator', w: 260, h: 380, html: `
-            <div style="height:100%; display:flex; flex-direction:column;">
-                <div id="c-scr" style="padding:20px; text-align:right; font-size:32px; background:#111;">0</div>
-                <div class="calc-grid">
-                    <div class="c-btn" onclick="p('7')">7</div><div class="c-btn" onclick="p('8')">8</div><div class="c-btn" onclick="p('9')">9</div><div class="c-btn c-op" onclick="p('/')">÷</div>
-                    <div class="c-btn" onclick="p('4')">4</div><div class="c-btn" onclick="p('5')">5</div><div class="c-btn" onclick="p('6')">6</div><div class="c-btn c-op" onclick="p('*')">×</div>
-                    <div class="c-btn" onclick="p('1')">1</div><div class="c-btn" onclick="p('2')">2</div><div class="c-btn" onclick="p('3')">3</div><div class="c-btn c-op" onclick="p('-')">-</div>
-                    <div class="c-btn" onclick="p('0')" style="grid-column:span 2">0</div><div class="c-btn" onclick="solv()">=</div><div class="c-btn c-op" onclick="p('+')">+</div>
-                </div>
-            </div>` },
+        calc: { title: 'Calculator', w: 260, h: 380, html: `<div style="height:100%; display:flex; flex-direction:column;"><div id="c-scr" style="padding:20px; text-align:right; font-size:32px; background:#111;">0</div><div class="calc-grid"><div class="c-btn" onclick="p('7')">7</div><div class="c-btn" onclick="p('8')">8</div><div class="c-btn" onclick="p('9')">9</div><div class="c-btn" style="background:#ff9f0a" onclick="p('/')">÷</div><div class="c-btn" onclick="p('4')">4</div><div class="c-btn" onclick="p('5')">5</div><div class="c-btn" onclick="p('6')">6</div><div class="c-btn" style="background:#ff9f0a" onclick="p('*')">×</div><div class="c-btn" onclick="p('1')">1</div><div class="c-btn" onclick="p('2')">2</div><div class="c-btn" onclick="p('3')">3</div><div class="c-btn" style="background:#ff9f0a" onclick="p('-')">-</div><div class="c-btn" onclick="p('0')" style="grid-column:span 2">0</div><div class="c-btn" onclick="solv()">=</div><div class="c-btn" style="background:#ff9f0a" onclick="p('+')">+</div></div></div>` },
         calendar: { title: 'Calendar', w: 400, h: 420, html: `<div id="cal-app"></div>` },
         weather: { title: 'Weather', w: 300, h: 350, html: `<div style="padding:30px; text-align:center; background:linear-gradient(#4facfe, #00f2fe); height:100%;"><i data-lucide="sun" style="width:50px;height:50px;"></i><h2>72°</h2><p>Sunny</p></div>` },
-        settings: { title: 'Settings', w: 450, h: 350, html: `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` }
+        /* 3. WALLPAPER OPTION REMOVED FROM SETTINGS */
+        settings: { title: 'Settings', w: 450, h: 250, html: `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` }
     };
 
     function renderCalendar() {
@@ -127,27 +119,27 @@
         const w = document.createElement('div');
         w.className = 'win genie-hide'; w.id = 'win-' + id;
         w.style.width = config.w + 'px'; w.style.height = config.h + 'px';
-        w.style.left = '100px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
-        w.innerHTML = `<div class="win-bar" onmousedown="startDrag(event, '${id}')"><div class="traffic-lights"><div class="tb tb-close" onclick="closeApp('${id}')">×</div><div class="tb tb-min" onclick="minApp('${id}')">-</div><div class="tb tb-max">+</div></div><span style="margin:auto;font-size:12px;">${config.title}</span></div><div class="win-content">${config.html}</div>`;
+        w.style.left = '150px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
+        w.innerHTML = `<div class="win-bar" onmousedown="startDrag(event, '${id}')"><div class="traffic-lights"><div class="tb tb-close" onclick="closeApp('${id}')">×</div><div class="tb tb-min" onclick="minApp('${id}')">-</div><div class="tb tb-max">+</div></div><span style="margin:auto;font-size:12px;font-weight:600;">${config.title}</span></div><div class="win-content">${config.html}</div>`;
         os.appendChild(w); wins[id] = w;
         setTimeout(() => { w.classList.remove('genie-hide'); if(id=='calendar') renderCalendar(); lucide.createIcons(); }, 10);
     }
 
-    function closeApp(id) { wins[id].classList.add('genie-hide'); setTimeout(() => { os.removeChild(wins[id]); delete wins[id]; }, 400); }
+    function closeApp(id) { wins[id].classList.add('genie-hide'); setTimeout(() => { if(wins[id]){os.removeChild(wins[id]); delete wins[id];} }, 400); }
     function minApp(id) { wins[id].classList.add('genie-hide'); }
     function focusWin(id) { wins[id].style.zIndex = ++zIndex; document.getElementById('active-app-name').innerText = apps[id].title; }
 
     let dWin = null, off = {x:0, y:0};
-    function startDrag(e, id) { focusWin(id); dWin = wins[id]; dWin.classList.add('dragging'); off = { x: e.clientX - dWin.offsetLeft, y: e.clientY - dWin.offsetTop }; }
+    function startDrag(e, id) { focusWin(id); dWin = wins[id]; off = { x: e.clientX - dWin.offsetLeft, y: e.clientY - dWin.offsetTop }; }
     document.addEventListener('mousemove', (e) => { if (dWin) { dWin.style.left = (e.clientX - off.x) + 'px'; dWin.style.top = (e.clientY - off.y) + 'px'; } });
-    document.addEventListener('mouseup', () => { if(dWin) dWin.classList.remove('dragging'); dWin = null; });
+    document.addEventListener('mouseup', () => { dWin = null; });
 
     let v = "";
     window.p = (n) => { v += n; document.getElementById('c-scr').innerText = v; };
     window.solv = () => { try { v = eval(v).toString(); document.getElementById('c-scr').innerText = v; } catch { v = ""; } };
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }, 1000);
-    window.onload = () => { lucide.createIcons(); openApp('calc'); };
+    window.onload = () => { lucide.createIcons(); openApp('calendar'); };
 </script>
 </body>
 </html>

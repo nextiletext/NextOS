@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextOS Pro - Ultra</title>
+    <title>NextOS - Genie Effect</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
@@ -18,51 +18,40 @@
             display: flex; align-items: center; padding: 0 15px; z-index: 10000;
             border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white;
         }
-        .mb-apple { width: 16px; height: 16px; margin-right: 18px; cursor: pointer; }
-        .mb-appname { font-size: 13px; font-weight: 700; margin-right: 15px; }
-        .mb-item { font-size: 13px; padding: 2px 10px; cursor: pointer; }
-        #mb-right { margin-left: auto; font-size: 12px; display: flex; gap: 15px; align-items: center; }
 
-        /* Windows */
+        /* Window System with Genie Animation */
         .win {
             position: absolute; border-radius: 12px; overflow: hidden;
             background: rgba(28, 28, 30, 0.95); backdrop-filter: blur(40px);
             border: 0.5px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 30px 60px rgba(0,0,0,0.5); display: flex; flex-direction: column;
-            min-width: 200px; min-height: 150px;
+            
+            /* The Genie Magic */
+            transition: transform 0.4s cubic-bezier(0.44, 0.05, 0.55, 0.95), opacity 0.3s ease;
+            transform-origin: bottom center; /* Sucks down toward the dock */
+            opacity: 1;
+            transform: scale(1) translateY(0);
         }
-        .win.fullscreen { width: 100vw !important; height: calc(100vh - 30px) !important; top: 30px !important; left: 0 !important; border-radius: 0; transition: all 0.3s ease; }
-        
+
+        /* State when closed/closing */
+        .win.closing {
+            transform: scale(0.1) translateY(500px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
         .win-bar { height: 38px; display: flex; align-items: center; padding: 0 15px; gap: 8px; cursor: move; background: rgba(255, 255, 255, 0.05); }
         .tb-btn { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; }
         .tb-close { background: #ff5f57; }
         .tb-min { background: #febc2e; }
         .tb-max { background: #28c840; }
-        
-        .win-content { flex: 1; overflow: hidden; display: flex; }
-
-        /* Resize Handle */
-        .resizer {
-            position: absolute; width: 15px; height: 15px; right: 0; bottom: 0;
-            cursor: nwse-resize; background: transparent; z-index: 10;
-        }
-
-        /* App Specifics */
-        .finder-sidebar { width: 160px; background: rgba(255,255,255,0.03); border-right: 0.5px solid rgba(255,255,255,0.1); padding: 15px 10px; }
-        .side-item { padding: 6px 10px; border-radius: 6px; color: white; font-size: 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        .finder-main { flex: 1; padding: 25px; color: white; display: grid; grid-template-columns: repeat(auto-fill, 90px); gap: 20px; }
-        
-        .calc-body { width: 100%; height: 100%; display: flex; flex-direction: column; background: #1c1c1e; }
-        .calc-display { padding: 20px; text-align: right; color: white; font-size: 32px; }
-        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); flex: 1; }
-        .btn { border: 0.1px solid #333; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .btn-op { background: #ff9f0a; }
+        .win-content { flex: 1; overflow: hidden; }
 
         /* Dock */
         #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(30px); border-radius: 22px; border: 0.5px solid rgba(255,255,255,0.2); z-index: 9999; }
         #dock { display: flex; gap: 12px; }
         .dk { width: 52px; height: 52px; border-radius: 14px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); color: white; }
-        .dk:hover { transform: scale(1.3) translateY(-10px); background: rgba(255,255,255,0.2); }
+        .dk:hover { transform: scale(1.2) translateY(-5px); }
     </style>
 </head>
 <body>
@@ -70,10 +59,9 @@
 <div id="os">
     <div id="wallpaper"></div>
     <div id="menubar">
-        <i data-lucide="apple" class="mb-apple"></i>
-        <span class="mb-appname" id="active-app">Finder</span>
-        <span class="mb-item">File</span><span class="mb-item">Edit</span><span class="mb-item">View</span>
-        <div id="mb-right"><span id="clock">--:--</span></div>
+        <i data-lucide="apple" style="width:16px; margin-right:15px; color:white;"></i>
+        <span id="active-app" style="color:white; font-size:13px; font-weight:700;">Finder</span>
+        <span id="clock" style="margin-left:auto; color:white; font-size:12px;">--:--</span>
     </div>
 
     <div id="dock-container">
@@ -81,7 +69,6 @@
             <div class="dk" onclick="openApp('finder')"><i data-lucide="folder"></i></div>
             <div class="dk" onclick="openApp('safari')"><i data-lucide="compass"></i></div>
             <div class="dk" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
-            <div class="dk" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
         </div>
     </div>
 </div>
@@ -92,59 +79,83 @@
     const wins = {};
 
     const apps = {
-        finder: { title: 'Finder', w: 600, h: 400, html: `<div class="finder-sidebar"><div class="side-item"><i data-lucide="home"></i> Home</div></div><div class="finder-main">Files here...</div>` },
-        safari: { title: 'Safari', w: 800, h: 500, html: `<iframe src="https://www.wikipedia.org" style="width:100%; height:100%; border:none; background:white;"></iframe>` },
-        calc: { title: 'Calculator', w: 260, h: 380, html: `<div class="calc-body"><div class="calc-display" id="c-scr">0</div><div class="calc-grid"><div class="btn" onclick="p('/')">÷</div><div class="btn btn-op" onclick="p('*')">×</div><div class="btn btn-op" onclick="s()">=</div></div></div>` },
-        settings: { title: 'Settings', w: 300, h: 200, html: `<div style="color:white; padding:20px;">Settings Panel</div>` }
+        finder: { title: 'Finder', w: 600, h: 400, html: `<div style="padding:20px; color:white;">Finder Content</div>` },
+        safari: { title: 'Safari', w: 800, h: 500, html: `<iframe src="https://www.wikipedia.org" style="width:100%; height:100%; border:none;"></iframe>` },
+        calc: { title: 'Calculator', w: 260, h: 380, html: `<div style="color:white; padding:20px;">Calc</div>` }
     };
 
     function openApp(id) {
-        if (wins[id]) { wins[id].style.display = 'flex'; focusWin(id); return; }
+        if (wins[id]) {
+            const w = wins[id];
+            w.classList.remove('closing');
+            focusWin(id);
+            return;
+        }
+        
         const config = apps[id];
         const w = document.createElement('div');
-        w.className = 'win'; w.id = 'win-' + id;
-        w.style.width = config.w + 'px'; w.style.height = config.h + 'px';
-        w.style.left = '100px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
+        w.className = 'win closing'; // Start closed for the "pop out" animation
+        w.id = 'win-' + id;
+        w.style.width = config.w + 'px';
+        w.style.height = config.h + 'px';
+        w.style.left = (window.innerWidth/2 - config.w/2) + 'px';
+        w.style.top = '100px';
+        w.style.zIndex = ++zIndex;
 
         w.innerHTML = `
             <div class="win-bar" onmousedown="dragStart(event, '${id}')">
                 <div class="tb-btn tb-close" onclick="closeWin('${id}')"></div>
-                <div class="tb-btn tb-min" onclick="minWin('${id}')"></div>
-                <div class="tb-btn tb-max" onclick="maxWin('${id}')"></div>
-                <span style="margin:auto; font-size:12px; color:white;">${config.title}</span>
+                <div class="tb-btn tb-min" onclick="closeWin('${id}')"></div>
+                <div class="tb-btn tb-max"></div>
+                <span style="margin:auto; font-size:12px; color:white; opacity:0.7;">${config.title}</span>
             </div>
             <div class="win-content">${config.html}</div>
-            <div class="resizer" onmousedown="resizeStart(event, '${id}')"></div>
         `;
-        os.appendChild(w); wins[id] = w;
+        
+        os.appendChild(w);
+        wins[id] = w;
+        
+        // Trigger the opening animation
+        setTimeout(() => {
+            w.classList.remove('closing');
+        }, 10);
+        
         lucide.createIcons();
     }
 
-    function closeWin(id) { os.removeChild(wins[id]); delete wins[id]; }
-    function minWin(id) { wins[id].style.display = 'none'; }
-    function maxWin(id) { wins[id].classList.toggle('fullscreen'); }
-    function focusWin(id) { wins[id].style.zIndex = ++zIndex; }
+    function closeWin(id) {
+        const w = wins[id];
+        w.classList.add('closing'); // Trigger the "suck back" animation
+        
+        // Remove from DOM after animation finishes
+        setTimeout(() => {
+            if(w.classList.contains('closing')) {
+                os.removeChild(w);
+                delete wins[id];
+            }
+        }, 400); 
+    }
 
-    // Dragging Logic
-    let activeWin = null, offset = {x:0, y:0};
-    function dragStart(e, id) { focusWin(id); activeWin = wins[id]; offset = { x: e.clientX - activeWin.offsetLeft, y: e.clientY - activeWin.offsetTop }; }
+    function focusWin(id) { 
+        wins[id].style.zIndex = ++zIndex; 
+        document.getElementById('active-app').innerText = apps[id].title;
+    }
+
+    let drag = null, offset = {x:0, y:0};
+    function dragStart(e, id) { 
+        focusWin(id); 
+        drag = wins[id]; 
+        offset = { x: e.clientX - drag.offsetLeft, y: e.clientY - drag.offsetTop }; 
+    }
     
-    // Resizing Logic
-    let resizerWin = null;
-    function resizeStart(e, id) { resizerWin = wins[id]; e.preventDefault(); e.stopPropagation(); }
-
     document.addEventListener('mousemove', e => {
-        if (activeWin && !activeWin.classList.contains('fullscreen')) {
-            activeWin.style.left = (e.clientX - offset.x) + 'px';
-            activeWin.style.top = (e.clientY - offset.y) + 'px';
-        }
-        if (resizerWin) {
-            resizerWin.style.width = (e.clientX - resizerWin.offsetLeft) + 'px';
-            resizerWin.style.height = (e.clientY - resizerWin.offsetTop) + 'px';
+        if (drag) {
+            drag.style.left = (e.clientX - offset.x) + 'px';
+            drag.style.top = (e.clientY - offset.y) + 'px';
         }
     });
 
-    document.addEventListener('mouseup', () => { activeWin = null; resizerWin = null; });
+    document.addEventListener('mouseup', () => drag = null);
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }, 1000);
     window.onload = () => { lucide.createIcons(); openApp('finder'); };

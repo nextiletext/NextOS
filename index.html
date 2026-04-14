@@ -1,399 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaudeOS</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
+        
+        body, html { 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background: #000;
+        }
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;}
-#os{width:100%;height:600px;position:relative;overflow:hidden;background:#1a2744;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;}
-#wallpaper{position:absolute;inset:0;background:
-  radial-gradient(ellipse 60% 50% at 20% 80%, #0e3460 0%, transparent 60%),
-  radial-gradient(ellipse 50% 60% at 80% 20%, #1e1060 0%, transparent 55%),
-  radial-gradient(ellipse 40% 40% at 60% 70%, #0a2040 0%, transparent 50%),
-  linear-gradient(135deg, #0d1f3c 0%, #1a1035 40%, #0f2545 70%, #071520 100%);}
-#menubar{position:absolute;top:0;left:0;right:0;height:26px;background:rgba(12,14,20,0.78);backdrop-filter:blur(24px) saturate(180%);display:flex;align-items:center;padding:0 14px;gap:0;z-index:900;border-bottom:0.5px solid rgba(255,255,255,0.1);}
-.mb-apple{width:20px;height:20px;margin-right:8px;cursor:pointer;flex-shrink:0;}
-.mb-appname{font-size:13px;font-weight:600;color:rgba(255,255,255,0.92);margin-right:4px;cursor:default;}
-.mb-menu{font-size:13px;color:rgba(255,255,255,0.78);padding:3px 8px;border-radius:4px;cursor:pointer;}
-.mb-menu:hover{background:rgba(255,255,255,0.14);}
-#mb-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-.mb-r-icon{width:16px;height:16px;cursor:pointer;opacity:0.82;}
-#mb-clock{font-size:12px;color:rgba(255,255,255,0.88);font-weight:500;letter-spacing:0.2px;}
+        #os {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background: #1a2744;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+        }
 
-.win{position:absolute;border-radius:12px;overflow:hidden;border:0.5px solid rgba(255,255,255,0.14);box-shadow:0 24px 60px rgba(0,0,0,0.65),0 2px 8px rgba(0,0,0,0.4);min-width:220px;min-height:120px;}
-.win-bar{height:38px;display:flex;align-items:center;padding:0 14px;gap:8px;cursor:move;position:relative;flex-shrink:0;background:rgba(36,36,48,0.92);}
-.win-bar-sep{border-bottom:0.5px solid rgba(255,255,255,0.07);}
-.tb-btn{width:13px;height:13px;border-radius:50%;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .1s;}
-.tb-btn:hover{opacity:.8;}
-.tb-close{background:#ff5f57;border:0.5px solid rgba(0,0,0,0.18);}
-.tb-min{background:#febc2e;border:0.5px solid rgba(0,0,0,0.18);}
-.tb-max{background:#28c840;border:0.5px solid rgba(0,0,0,0.18);}
-.tb-title{position:absolute;left:50%;transform:translateX(-50%);font-size:13px;color:rgba(255,255,255,0.72);font-weight:500;pointer-events:none;white-space:nowrap;}
-.win-content{overflow:hidden;background:rgba(22,22,30,0.96);}
+        #wallpaper {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 60% 50% at 20% 80%, #0e3460 0%, transparent 60%),
+                radial-gradient(ellipse 50% 60% at 80% 20%, #1e1060 0%, transparent 55%),
+                radial-gradient(ellipse 40% 40% at 60% 70%, #0a2040 0%, transparent 50%),
+                linear-gradient(135deg, #0d1f3c 0%, #1a1035 40%, #0f2545 70%, #071520 100%);
+            background-size: cover;
+        }
 
-#dock{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.1);backdrop-filter:blur(24px) saturate(180%);border:0.5px solid rgba(255,255,255,0.18);border-radius:20px;padding:7px 12px;display:flex;align-items:flex-end;gap:8px;z-index:900;}
-.dk{width:52px;height:52px;border-radius:13px;cursor:pointer;position:relative;transition:transform .15s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.dk:hover{transform:translateY(-12px) scale(1.18);}
-.dk.open::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.6);}
-.dk-sep{width:0.5px;height:38px;background:rgba(255,255,255,0.22);margin:0 2px;align-self:center;}
+        #menubar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 26px;
+            background: rgba(12, 14, 20, 0.75);
+            backdrop-filter: blur(20px) saturate(180%);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            z-index: 9999;
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+        }
 
-.desk-icon{position:absolute;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:8px;border-radius:8px;width:76px;}
-.desk-icon:hover{background:rgba(255,255,255,0.1);}
-.desk-icon .label{font-size:12px;color:rgba(255,255,255,0.9);text-align:center;text-shadow:0 1px 6px rgba(0,0,0,0.9);}
+        .mb-apple { width: 16px; height: 16px; margin-right: 12px; cursor: pointer; opacity: 0.9; }
+        .mb-appname { font-size: 13px; font-weight: 700; color: #fff; margin-right: 12px; }
+        .mb-menu { font-size: 13px; color: #fff; padding: 2px 8px; border-radius: 4px; cursor: pointer; opacity: 0.9; }
+        .mb-menu:hover { background: rgba(255, 255, 255, 0.15); }
+        #mb-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+        #mb-clock { font-size: 12px; color: #fff; font-weight: 500; }
 
-.finder-layout{display:flex;height:100%;}
-.finder-sb{width:150px;background:rgba(18,18,26,0.7);border-right:0.5px solid rgba(255,255,255,0.07);padding:10px 0;flex-shrink:0;}
-.sb-sec{font-size:11px;color:rgba(255,255,255,0.35);padding:8px 14px 4px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;}
-.sb-row{display:flex;align-items:center;gap:8px;padding:5px 14px;font-size:13px;color:rgba(255,255,255,0.68);cursor:pointer;border-radius:0;}
-.sb-row:hover{background:rgba(255,255,255,0.07);}
-.sb-row.sel{background:rgba(80,120,255,0.22);color:rgba(255,255,255,0.92);}
-.finder-main{flex:1;padding:12px;overflow:auto;}
-.f-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px;}
-.f-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:8px;cursor:pointer;}
-.f-item:hover{background:rgba(255,255,255,0.08);}
-.f-item .lbl{font-size:11px;color:rgba(255,255,255,0.72);text-align:center;line-height:1.3;}
+        .win {
+            position: absolute;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(22, 22, 30, 0.94);
+            backdrop-filter: blur(30px);
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
 
-.term-wrap{background:#0d0f14;height:100%;padding:14px;font-family:'SF Mono','Menlo',monospace;font-size:12.5px;display:flex;flex-direction:column;}
-.term-out{flex:1;overflow:auto;margin-bottom:8px;}
-.t-line{margin:2px 0;line-height:1.5;}
-.t-green{color:#57e87a;}
-.t-blue{color:#79b8ff;}
-.t-red{color:#f97583;}
-.t-dim{color:#6a737d;}
-.t-white{color:#e1e4e8;}
-.term-row{display:flex;align-items:center;gap:6px;}
-.term-ps{color:#57e87a;white-space:nowrap;font-size:12.5px;}
-.term-inp{background:transparent;border:none;outline:none;color:#e1e4e8;font-family:inherit;font-size:12.5px;flex:1;caret-color:#e1e4e8;}
--webkit-user-select:text;user-select:text;
+        .win-bar {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            gap: 8px;
+            cursor: move;
+            background: rgba(40, 40, 50, 0.4);
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+        }
 
-.notes-wrap{display:flex;height:100%;}
-.notes-sb{width:180px;background:#f7f5ed;border-right:1px solid #e0ddd4;padding:8px 0;flex-shrink:0;overflow:auto;}
-.notes-item{padding:8px 14px;cursor:pointer;border-bottom:0.5px solid rgba(0,0,0,0.06);}
-.notes-item:hover{background:#edeae0;}
-.notes-item.sel{background:#e3dfc8;}
-.notes-item .n-title{font-size:13px;font-weight:500;color:#2c2b26;}
-.notes-item .n-date{font-size:11px;color:#8a8778;margin-top:2px;}
-.notes-item .n-preview{font-size:11px;color:#6b6a60;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.notes-body{flex:1;background:#fdfae8;padding:20px;display:flex;flex-direction:column;}
-.notes-body textarea{flex:1;background:transparent;border:none;outline:none;font-family:Georgia,serif;font-size:14.5px;color:#2c2b26;resize:none;line-height:1.9;-webkit-user-select:text;user-select:text;}
+        .tb-btn { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; }
+        .tb-close { background: #ff5f57; }
+        .tb-min { background: #febc2e; }
+        .tb-max { background: #28c840; }
+        .tb-title { position: absolute; left: 50%; transform: translateX(-50%); font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 500; }
 
-.sys-wrap{display:flex;height:100%;}
-.sys-sb{width:190px;background:rgba(18,18,26,0.7);border-right:0.5px solid rgba(255,255,255,0.07);padding:8px;overflow:auto;flex-shrink:0;}
-.sys-search{width:100%;background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);border-radius:8px;color:rgba(255,255,255,0.8);font-size:13px;padding:6px 10px;outline:none;margin-bottom:10px;-webkit-user-select:text;user-select:text;}
-.sys-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:2px;}
-.sys-item:hover{background:rgba(255,255,255,0.07);}
-.sys-item.sel{background:rgba(80,110,255,0.2);}
-.sys-icon-wrap{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.sys-item-label{font-size:13px;color:rgba(255,255,255,0.78);}
-.sys-main{flex:1;padding:20px;overflow:auto;}
-.sys-heading{font-size:18px;font-weight:500;color:rgba(255,255,255,0.9);margin-bottom:18px;}
-.pref-card{background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;margin-bottom:12px;}
-.pref-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:0.5px solid rgba(255,255,255,0.05);}
-.pref-row:last-child{border-bottom:none;}
-.pref-left .p-label{font-size:13px;color:rgba(255,255,255,0.85);}
-.pref-left .p-sub{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;}
-.tog{width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
-.tog::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:white;transition:left .2s;}
-.tog.off{background:rgba(255,255,255,0.2);}
-.tog.off::after{left:20px;}
+        .win-content { flex: 1; overflow: hidden; }
 
-.notif{position:absolute;top:34px;right:12px;background:rgba(32,32,44,0.96);backdrop-filter:blur(20px);border:0.5px solid rgba(255,255,255,0.14);border-radius:14px;padding:13px 15px;width:270px;z-index:9000;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
-.notif-enter{animation:nfade .2s ease;}
-@keyframes nfade{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
-.notif-app{font-size:11px;color:rgba(255,255,255,0.38);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
-.notif-title{font-size:13px;color:rgba(255,255,255,0.9);font-weight:500;}
-.notif-msg{font-size:12px;color:rgba(255,255,255,0.5);margin-top:3px;line-height:1.4;}
-</style>
+        #dock {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(25px) saturate(150%);
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 9998;
+        }
+
+        .dk {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dk:hover { transform: scale(1.2) translateY(-10px); }
+        .dk.open::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        /* Finder Layout */
+        .finder-layout { display: flex; height: 100%; color: #fff; }
+        .finder-sb { width: 160px; background: rgba(0,0,0,0.2); border-right: 0.5px solid rgba(255,255,255,0.1); padding: 10px 0; }
+        .sb-sec { font-size: 11px; opacity: 0.4; padding: 10px 16px 5px; text-transform: uppercase; font-weight: 700; }
+        .sb-row { padding: 6px 16px; font-size: 13px; cursor: pointer; }
+        .sb-row:hover { background: rgba(255,255,255,0.1); }
+        .sb-row.sel { background: rgba(255,255,255,0.15); font-weight: 500; }
+        .finder-main { flex: 1; padding: 20px; overflow-y: auto; }
+        .f-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 20px; }
+        .f-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; text-align: center; }
+        .f-item .lbl { font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+
+        /* Terminal Styles */
+        .term-wrap { background: #1c1c1e; height: 100%; padding: 15px; font-family: 'SF Mono', Menlo, monospace; font-size: 13px; color: #fff; }
+        .term-out { height: calc(100% - 25px); overflow-y: auto; line-height: 1.5; }
+        .term-inp-line { display: flex; gap: 8px; }
+        .term-inp { background: transparent; border: none; outline: none; color: #30d158; flex: 1; font-family: inherit; font-size: inherit; }
+        .t-blue { color: #0a84ff; }
+        .t-green { color: #30d158; }
+        .t-red { color: #ff453a; }
+
+        .notif {
+            position: absolute;
+            top: 40px; right: 20px;
+            width: 280px;
+            background: rgba(30, 30, 40, 0.8);
+            backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255,255,255,0.2);
+            border-radius: 14px;
+            padding: 15px;
+            color: #fff;
+            z-index: 10000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
 
 <div id="os">
-<div id="wallpaper"></div>
+    <div id="wallpaper"></div>
 
-<div id="menubar">
-  <svg class="mb-apple" viewBox="0 0 20 20" fill="none">
-    <path d="M13.6 3.5C14.4 2.6 14.9 1.4 14.7 0.2 13.6 0.3 12.3 1 11.5 1.9 10.7 2.7 10.1 4 10.3 5.1 11.5 5.2 12.8 4.4 13.6 3.5Z" fill="rgba(255,255,255,0.85)"/>
-    <path d="M14.7 5.3C13.1 5.3 12.2 6.2 11.1 6.2 10 6.2 8.9 5.3 7.5 5.3 5.2 5.3 2.8 7.1 2.8 10.7 2.8 12.9 3.6 15.3 4.7 16.9 5.6 18.3 6.4 19.5 7.7 19.5 9 19.5 9.5 18.6 11.1 18.6 12.7 18.6 13.1 19.5 14.5 19.5 15.8 19.5 16.7 18.2 17.5 16.9 18.1 16 18.4 15 18.5 14.9 17 14.3 16 12.7 16 11 16 9 17.3 7.7 17.3 6.4 17.3 5.4 16.3 4.8 15.3 5 15.1 5.2 15 14.7 5.3Z" fill="rgba(255,255,255,0.85)"/>
-  </svg>
-  <span class="mb-appname" id="mb-appname">Finder</span>
-  <span class="mb-menu">File</span>
-  <span class="mb-menu">Edit</span>
-  <span class="mb-menu">View</span>
-  <span class="mb-menu">Window</span>
-  <div id="mb-right">
-    <svg class="mb-r-icon" viewBox="0 0 16 16" fill="rgba(255,255,255,0.8)"><path d="M1 10h2v4H1v-4zm4-4h2v8H5V6zm4-3h2v11H9V3zm4-2h2v13h-2V1z"/></svg>
-    <svg class="mb-r-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2C5.2 2 2.8 3.6 1.6 6H0.5C0.2 6 0 6.2 0 6.5S0.2 7 0.5 7H1.2C1.1 7.3 1 7.6 1 8 1 10.5 2.7 12.6 5 13.3V14.5C5 14.8 5.2 15 5.5 15S6 14.8 6 14.5V13.7C6.6 13.9 7.3 14 8 14S9.4 13.9 10 13.7V14.5C10 14.8 10.2 15 10.5 15S11 14.8 11 14.5V13.3C13.3 12.6 15 10.5 15 8 15 4.7 11.9 2 8 2ZM8 12C5.2 12 3 10.2 3 8S5.2 4 8 4 13 5.8 13 8 10.8 12 8 12Z" fill="rgba(255,255,255,0.8)"/><circle cx="8" cy="8" r="2" fill="rgba(255,255,255,0.8)"/></svg>
-    <svg class="mb-r-icon" viewBox="0 0 16 16" fill="rgba(255,255,255,0.8)" onclick="toggleNotif()" style="cursor:pointer;"><path d="M8 1a1 1 0 00-1 1v.3C4.7 2.9 3 4.8 3 7v3L1.5 11.5a.5.5 0 00.5.5h12a.5.5 0 00.5-.5L13 10V7C13 4.8 11.3 2.9 9 2.3V2a1 1 0 00-1-1zM6 13a2 2 0 004 0H6z"/></svg>
-    <svg class="mb-r-icon" viewBox="0 0 16 16" fill="rgba(255,255,255,0.8)"><path d="M2 10.5V13h2.5l7.4-7.4-2.5-2.5L2 10.5zm11.8-6.8a.67.67 0 000-.94l-1.56-1.56a.67.67 0 00-.94 0l-1.22 1.22 2.5 2.5 1.22-1.22z"/></svg>
-    <span id="mb-clock"></span>
-  </div>
-</div>
+    <div id="menubar">
+        <svg class="mb-apple" viewBox="0 0 20 20" fill="white"><path d="M13.6 3.5C14.4 2.6 14.9 1.4 14.7 0.2 13.6 0.3 12.3 1 11.5 1.9 10.7 2.7 10.1 4 10.3 5.1 11.5 5.2 12.8 4.4 13.6 3.5Z"/><path d="M14.7 5.3C13.1 5.3 12.2 6.2 11.1 6.2 10 6.2 8.9 5.3 7.5 5.3 5.2 5.3 2.8 7.1 2.8 10.7 2.8 12.9 3.6 15.3 4.7 16.9 5.6 18.3 6.4 19.5 7.7 19.5 9 19.5 9.5 18.6 11.1 18.6 12.7 18.6 13.1 19.5 14.5 19.5 15.8 19.5 16.7 18.2 17.5 16.9 18.1 16 18.4 15 18.5 14.9 17 14.3 16 12.7 16 11 16 9 17.3 7.7 17.3 6.4 17.3 5.4 16.3 4.8 15.3 5 15.1 5.2 15 14.7 5.3Z"/></svg>
+        <span class="mb-appname" id="mb-appname">Finder</span>
+        <span class="mb-menu">File</span>
+        <span class="mb-menu">Edit</span>
+        <span class="mb-menu">View</span>
+        <span class="mb-menu">Go</span>
+        <div id="mb-right">
+            <span id="mb-clock">--:--</span>
+        </div>
+    </div>
 
-<div class="desk-icon" style="top:44px;right:20px;" ondblclick="openApp('finder')">
-  <svg width="48" height="48" viewBox="0 0 48 48">
-    <rect width="48" height="48" rx="11" fill="#1e7cf5"/>
-    <rect x="4" y="4" width="40" height="40" rx="9" fill="#2889ff"/>
-    <rect x="4" y="20" width="40" height="24" rx="0" fill="#1565d8"/>
-    <rect x="4" y="36" width="40" height="8" rx="0" fill="#0f4fc4" style="border-bottom-left-radius:9px;border-bottom-right-radius:9px;"/>
-    <circle cx="18" cy="22" r="7" fill="none" stroke="white" stroke-width="2.5"/>
-    <line x1="23" y1="27" x2="29" y2="33" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-  </svg>
-  <span class="label">Finder</span>
-</div>
-
-<div id="dock">
-  <div class="dk" id="dk-finder" onclick="openApp('finder')" title="Finder">
-    <svg width="52" height="52" viewBox="0 0 52 52"><rect width="52" height="52" rx="13" fill="#1e7cf5"/><rect x="4" y="22" width="44" height="26" rx="0" fill="#1565d8" style="border-bottom-left-radius:9px;border-bottom-right-radius:9px;"/><circle cx="20" cy="24" r="8" fill="none" stroke="white" stroke-width="2.8"/><line x1="26" y1="30" x2="33" y2="37" stroke="white" stroke-width="2.8" stroke-linecap="round"/></svg>
-  </div>
-  <div class="dk" id="dk-notes" onclick="openApp('notes')" title="Notes">
-    <svg width="52" height="52" viewBox="0 0 52 52"><rect width="52" height="52" rx="13" fill="#ffd60a"/><rect x="10" y="8" width="32" height="36" rx="4" fill="rgba(255,255,255,0.95)"/><line x1="16" y1="17" x2="36" y2="17" stroke="#c8a800" stroke-width="1.8" stroke-linecap="round"/><line x1="16" y1="23" x2="36" y2="23" stroke="#c8a800" stroke-width="1.8" stroke-linecap="round"/><line x1="16" y1="29" x2="28" y2="29" stroke="#c8a800" stroke-width="1.8" stroke-linecap="round"/></svg>
-  </div>
-  <div class="dk" id="dk-terminal" onclick="openApp('terminal')" title="Terminal">
-    <svg width="52" height="52" viewBox="0 0 52 52"><rect width="52" height="52" rx="13" fill="#1c1c1e"/><rect x="7" y="10" width="38" height="28" rx="4" fill="#2a2a2e"/><polygon points="13,18 21,26 13,34" fill="#30d158" stroke="none"/><line x1="23" y1="33" x2="33" y2="33" stroke="#30d158" stroke-width="2" stroke-linecap="round"/></svg>
-  </div>
-  <div class="dk" id="dk-settings" onclick="openApp('settings')" title="System Settings">
-    <svg width="52" height="52" viewBox="0 0 52 52"><rect width="52" height="52" rx="13" fill="#636366"/><circle cx="26" cy="26" r="8" fill="none" stroke="white" stroke-width="2.5"/><circle cx="26" cy="26" r="3.5" fill="white"/><g stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="26" y1="10" x2="26" y2="15"/><line x1="26" y1="37" x2="26" y2="42"/><line x1="10" y1="26" x2="15" y2="26"/><line x1="37" y1="26" x2="42" y2="26"/><line x1="15.5" y1="15.5" x2="19" y2="19"/><line x1="33" y1="33" x2="36.5" y2="36.5"/><line x1="36.5" y1="15.5" x2="33" y2="19"/><line x1="15.5" y1="36.5" x2="19" y2="33"/></g></svg>
-  </div>
-  <div class="dk-sep"></div>
-  <div class="dk" onclick="showNotif('Trash','Trash is empty','Nothing to delete right now.')" title="Trash">
-    <svg width="52" height="52" viewBox="0 0 52 52"><rect width="52" height="52" rx="13" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/><rect x="16" y="19" width="20" height="22" rx="3" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"/><line x1="13" y1="19" x2="39" y2="19" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round"/><line x1="22" y1="14" x2="30" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round"/><line x1="22" y1="25" x2="22" y2="34" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/><line x1="26" y1="25" x2="26" y2="34" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/><line x1="30" y1="25" x2="30" y2="34" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/></svg>
-  </div>
-</div>
+    <div id="dock">
+        <div class="dk" onclick="openApp('finder')" title="Finder">
+            <svg width="40" height="40" viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#2889ff"/><circle cx="18" cy="20" r="6" fill="none" stroke="white" stroke-width="3"/><line x1="24" y1="26" x2="32" y2="34" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>
+        </div>
+        <div class="dk" onclick="openApp('terminal')" title="Terminal">
+            <svg width="40" height="40" viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#1c1c1e"/><path d="M12 18L20 24L12 30" stroke="#30d158" stroke-width="3" fill="none"/><line x1="22" y1="32" x2="34" y2="32" stroke="#30d158" stroke-width="3"/></svg>
+        </div>
+        <div class="dk" onclick="showNotif('System','Status OK','All systems operational.')" title="Status">
+            <svg width="40" height="40" viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#ff9f0a"/><circle cx="24" cy="24" r="10" fill="none" stroke="white" stroke-width="3"/></svg>
+        </div>
+    </div>
 </div>
 
 <script>
-const os=document.getElementById('os');
-let zTop=10,wins={};
-const wCfg={
-  finder:{title:'Finder',w:560,h:360,x:60,y:44},
-  notes:{title:'Notes',w:480,h:340,x:120,y:54},
-  terminal:{title:'Terminal',w:500,h:300,x:80,y:64},
-  settings:{title:'System Settings',w:540,h:380,x:100,y:44}
-};
+    const os = document.getElementById('os');
+    let zIndex = 100;
+    const wins = {};
 
-function tick(){
-  const n=new Date();let h=n.getHours(),m=n.getMinutes();
-  const ap=h>=12?'PM':'AM';h=h%12||12;
-  document.getElementById('mb-clock').textContent=`${h}:${String(m).padStart(2,'0')} ${ap}`;
-}
-tick();setInterval(tick,15000);
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('mb-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-function finderSVG(icon){
-  const icons={
-    folder:`<svg width="30" height="30" viewBox="0 0 30 30"><path d="M3 8h10l2 3h12v14H3V8z" fill="#4a9eff"/><path d="M3 11h24v14H3V11z" fill="#5aafff"/></svg>`,
-    pdf:`<svg width="30" height="30" viewBox="0 0 30 30"><rect x="5" y="2" width="20" height="26" rx="3" fill="#ff453a"/><text x="15" y="19" text-anchor="middle" font-size="9" font-weight="bold" fill="white" font-family="Helvetica">PDF</text></svg>`,
-    img:`<svg width="30" height="30" viewBox="0 0 30 30"><rect x="4" y="4" width="22" height="22" rx="4" fill="#30a96e"/><circle cx="11" cy="11" r="3" fill="rgba(255,255,255,0.6)"/><path d="M4 20l7-8 6 7 3-4 6 5v4H4z" fill="rgba(255,255,255,0.85)"/></svg>`,
-    doc:`<svg width="30" height="30" viewBox="0 0 30 30"><rect x="5" y="2" width="20" height="26" rx="3" fill="#3478f6"/><line x1="9" y1="10" x2="21" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="9" y1="14" x2="21" y2="14" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="9" y1="18" x2="16" y2="18" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-    zip:`<svg width="30" height="30" viewBox="0 0 30 30"><rect x="5" y="2" width="20" height="26" rx="3" fill="#8e44ad"/><text x="15" y="19" text-anchor="middle" font-size="9" font-weight="bold" fill="white" font-family="Helvetica">ZIP</text></svg>`,
-    code:`<svg width="30" height="30" viewBox="0 0 30 30"><rect x="5" y="2" width="20" height="26" rx="3" fill="#1c1c1e"/><text x="15" y="19" text-anchor="middle" font-size="8" font-weight="bold" fill="#30d158" font-family="Menlo,monospace">&lt;/&gt;</text></svg>`,
-  };
-  return icons[icon]||icons.doc;
-}
+    const appConfig = {
+        finder: { title: 'Finder', w: 600, h: 400 },
+        terminal: { title: 'Terminal', w: 500, h: 350 }
+    };
 
-function makeFinderContent(){
-  const files=[
-    ['folder','Projects'],['folder','Archive'],['folder','Design'],
-    ['pdf','Resume.pdf'],['doc','Report.docx'],['img','Screenshot'],
-    ['zip','Backup.zip'],['code','index.js'],['img','Wallpapers'],
-    ['doc','Notes.txt'],['code','style.css'],['folder','Downloads']
-  ];
-  return `<div class="finder-layout">
-    <div class="finder-sb">
-      <div class="sb-sec">Favourites</div>
-      <div class="sb-row sel">${sbIcon('home')} Home</div>
-      <div class="sb-row">${sbIcon('folder')} Documents</div>
-      <div class="sb-row">${sbIcon('dl')} Downloads</div>
-      <div class="sb-row">${sbIcon('img')} Pictures</div>
-      <div class="sb-row">${sbIcon('music')} Music</div>
-      <div class="sb-sec">Locations</div>
-      <div class="sb-row">${sbIcon('hd')} Macintosh HD</div>
-      <div class="sb-row">${sbIcon('cloud')} iCloud</div>
-    </div>
-    <div class="finder-main"><div class="f-grid">
-      ${files.map(([t,n])=>`<div class="f-item">${finderSVG(t)}<div class="lbl">${n}</div></div>`).join('')}
-    </div></div>
-  </div>`;
-}
+    function openApp(id) {
+        if (wins[id]) {
+            focusWin(id);
+            return;
+        }
 
-function sbIcon(t){
-  const s='width:14px;height:14px;flex-shrink:0;';
-  const m={
-    home:`<svg style="${s}" viewBox="0 0 14 14" fill="rgba(255,255,255,0.5)"><path d="M7 1L1 6v7h4V9h4v4h4V6L7 1z"/></svg>`,
-    folder:`<svg style="${s}" viewBox="0 0 14 14" fill="rgba(255,255,255,0.5)"><path d="M1 4h5l1 1.5H13V12H1V4z"/></svg>`,
-    dl:`<svg style="${s}" viewBox="0 0 14 14" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"><path d="M7 2v7M4 6l3 3 3-3M2 11h10" stroke-linecap="round"/></svg>`,
-    img:`<svg style="${s}" viewBox="0 0 14 14" fill="rgba(255,255,255,0.5)"><rect x="1" y="2" width="12" height="10" rx="2"/><circle cx="5" cy="6" r="1.5" fill="rgba(30,30,40,0.6)"/><path d="M1 10l4-4 3 3 2-2 3 3v1H1z" fill="rgba(30,30,40,0.4)"/></svg>`,
-    music:`<svg style="${s}" viewBox="0 0 14 14" fill="rgba(255,255,255,0.5)"><path d="M5 11V3l7-1.5V9M5 11a2 2 0 11-4 0 2 2 0 014 0zM12 9a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`,
-    hd:`<svg style="${s}" viewBox="0 0 14 14" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.3"><rect x="1" y="3" width="12" height="8" rx="2"/><circle cx="10.5" cy="7" r="1.2" fill="rgba(255,255,255,0.5)" stroke="none"/></svg>`,
-    cloud:`<svg style="${s}" viewBox="0 0 14 14" fill="rgba(255,255,255,0.5)"><path d="M11 10H3a3 3 0 010-6 3 3 0 015.8-1A3 3 0 0111 10z"/></svg>`,
-  };
-  return m[t]||m.folder;
-}
+        const config = appConfig[id];
+        const w = document.createElement('div');
+        w.className = 'win';
+        w.id = 'win-' + id;
+        w.style.width = config.w + 'px';
+        w.style.height = config.h + 'px';
+        w.style.left = (Math.random() * 50 + 100) + 'px';
+        w.style.top = (Math.random() * 50 + 100) + 'px';
+        w.style.zIndex = ++zIndex;
 
-function makeTerminalContent(){
-  return `<div class="term-wrap" id="tw">
-    <div class="term-out" id="to">
-      <div class="t-line t-dim">Last login: ${new Date().toDateString()} on ttys000</div>
-      <div class="t-line t-dim" style="margin-bottom:8px;">Type <span class="t-blue">help</span> for available commands</div>
-    </div>
-    <div class="term-row">
-      <span class="term-ps">guest@ClaudeOS ~ %</span>
-      <input class="term-inp" id="ti" onkeydown="termKey(event)" autocomplete="off" spellcheck="false">
-    </div>
-  </div>`;
-}
+        w.innerHTML = `
+            <div class="win-bar" onmousedown="startDrag(event, '${id}')">
+                <div class="tb-btn tb-close" onclick="closeWin('${id}')"></div>
+                <div class="tb-btn tb-min"></div>
+                <div class="tb-btn tb-max"></div>
+                <span class="tb-title">${config.title}</span>
+            </div>
+            <div class="win-content">${getAppContent(id)}</div>
+        `;
 
-function makeNotesContent(){
-  const entries=[
-    {title:'Welcome',date:'Today, 10:24 AM',preview:'Welcome to ClaudeOS!',body:`Welcome to ClaudeOS!\n\nThis is your Notes app. You can click different notes in the sidebar, and type freely in this area.\n\nTry opening the Terminal — type 'help' to see what commands are available.`},
-    {title:'Ideas',date:'Yesterday',preview:'Things to build next...',body:`Things to build next:\n\n• Calculator app\n• Music player\n• Spotlight search\n• Calendar\n• Maps app\n\nThis is getting fun!`},
-    {title:'Shopping list',date:'Mon, Apr 7',preview:'Milk, eggs, bread...',body:`Milk\nEggs\nBread\nOlive oil\nCoffee\nLemons\nPasta\nTomatoes`},
-  ];
-  let current=0;
-  window._notesEntries=entries;window._notesCurrent=0;
-  return `<div class="notes-wrap">
-    <div class="notes-sb" id="notes-sb">
-      ${entries.map((e,i)=>`<div class="notes-item${i===0?' sel':''}" onclick="selectNote(${i})">
-        <div class="n-title">${e.title}</div>
-        <div class="n-date">${e.date}</div>
-        <div class="n-preview">${e.preview}</div>
-      </div>`).join('')}
-    </div>
-    <div class="notes-body"><textarea id="notes-ta">${entries[0].body}</textarea></div>
-  </div>`;
-}
+        os.appendChild(w);
+        wins[id] = w;
+        document.getElementById('mb-appname').textContent = config.title;
+    }
 
-window.selectNote=function(i){
-  window._notesCurrent=i;
-  document.getElementById('notes-ta').value=window._notesEntries[i].body;
-  document.querySelectorAll('.notes-item').forEach((el,j)=>el.classList.toggle('sel',j===i));
-};
+    function getAppContent(id) {
+        if (id === 'finder') {
+            return `
+                <div class="finder-layout">
+                    <div class="finder-sb">
+                        <div class="sb-sec">Favorites</div>
+                        <div class="sb-row sel">AirDrop</div>
+                        <div class="sb-row">Recents</div>
+                        <div class="sb-row">Applications</div>
+                        <div class="sb-row">Documents</div>
+                    </div>
+                    <div class="finder-main">
+                        <div class="f-grid">
+                            <div class="f-item">📂<div class="lbl">Projects</div></div>
+                            <div class="f-item">📄<div class="lbl">Notes.txt</div></div>
+                            <div class="f-item">🖼️<div class="lbl">Image.png</div></div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        if (id === 'terminal') {
+            return `
+                <div class="term-wrap">
+                    <div class="term-out" id="term-out">Welcome to ClaudeOS Terminal. Type 'help'.</div>
+                    <div class="term-inp-line">
+                        <span>guest@os %</span>
+                        <input class="term-inp" onkeydown="handleTerm(event)" autofocus>
+                    </div>
+                </div>`;
+        }
+        return '';
+    }
 
-function makeSettingsContent(){
-  const sections=[
-    {label:'General',col:'#636366'},
-    {label:'Appearance',col:'#8e44ad'},
-    {label:'Display',col:'#1e7cf5'},
-    {label:'Sound',col:'#ff9f0a'},
-    {label:'Privacy',col:'#30d158'},
-    {label:'Network',col:'#0a84ff'},
-    {label:'Notifications',col:'#ff453a'},
-  ];
-  const prefs=[
-    ['Dark Mode','Use dark interface throughout','on'],
-    ['Wi-Fi','Connected to ClaudeNet 5G','on'],
-    ['Notifications','Show banners and alerts','on'],
-    ['Auto-update','Keep ClaudeOS up to date','on'],
-    ['Location','Allow location services','off'],
-    ['Analytics','Send crash reports','off'],
-  ];
-  return `<div class="sys-wrap">
-    <div class="sys-sb">
-      <input class="sys-search" placeholder="Search..." type="text">
-      ${sections.map((s,i)=>`<div class="sys-item${i===0?' sel':''}" onclick="selectSysItem(this,'${s.label}')">
-        <div class="sys-icon-wrap" style="background:${s.col}">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="white"><rect x="2" y="2" width="12" height="12" rx="3"/></svg>
-        </div>
-        <span class="sys-item-label">${s.label}</span>
-      </div>`).join('')}
-    </div>
-    <div class="sys-main">
-      <div class="sys-heading" id="sys-heading">General</div>
-      <div class="pref-card">
-        ${prefs.map(([l,s,v])=>`<div class="pref-row">
-          <div class="pref-left"><div class="p-label">${l}</div><div class="p-sub">${s}</div></div>
-          <div class="tog${v==='off'?' off':''}" onclick="this.classList.toggle('off')"></div>
-        </div>`).join('')}
-      </div>
-    </div>
-  </div>`;
-}
+    function focusWin(id) {
+        wins[id].style.zIndex = ++zIndex;
+        document.getElementById('mb-appname').textContent = appConfig[id].title;
+    }
 
-window.selectSysItem=function(el,label){
-  document.querySelectorAll('.sys-item').forEach(e=>e.classList.remove('sel'));
-  el.classList.add('sel');
-  const h=document.getElementById('sys-heading');
-  if(h)h.textContent=label;
-};
+    function closeWin(id) {
+        os.removeChild(wins[id]);
+        delete wins[id];
+    }
 
-const builders={finder:makeFinderContent,notes:makeNotesContent,terminal:makeTerminalContent,settings:makeSettingsContent};
+    let dragging = null;
+    function startDrag(e, id) {
+        focusWin(id);
+        const win = wins[id];
+        const rect = win.getBoundingClientRect();
+        dragging = { id, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top };
+    }
 
-function openApp(id){
-  if(wins[id]){focusWin(id);return;}
-  const c=wCfg[id];
-  const w=document.createElement('div');
-  w.className='win'; w.id='w-'+id;
-  const ox=c.x+Math.random()*30|0, oy=c.y+Math.random()*20|0;
-  w.style.cssText=`left:${ox}px;top:${oy}px;width:${c.w}px;height:${c.h}px;z-index:${++zTop};`;
-  w.innerHTML=`<div class="win-bar win-bar-sep" onmousedown="startDrag(event,'${id}')">
-    <div class="tb-btn tb-close" onclick="closeWin('${id}')"></div>
-    <div class="tb-btn tb-min" onclick="minWin('${id}')"></div>
-    <div class="tb-btn tb-max"></div>
-    <span class="tb-title">${c.title}</span>
-  </div>
-  <div class="win-content" style="height:calc(100% - 38px);">${builders[id]()}</div>`;
-  os.appendChild(w); wins[id]=w;
-  document.getElementById('dk-'+id)&&document.getElementById('dk-'+id).classList.add('open');
-  document.getElementById('mb-appname').textContent=c.title;
-  if(id==='terminal')setTimeout(()=>{const i=document.getElementById('ti');if(i)i.focus();},50);
-}
+    document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const win = wins[dragging.id];
+        win.style.left = (e.clientX - dragging.offsetX) + 'px';
+        win.style.top = (e.clientY - dragging.offsetY) + 'px';
+    });
 
-function focusWin(id){
-  if(wins[id]){wins[id].style.zIndex=++zTop;document.getElementById('mb-appname').textContent=wCfg[id].title;}
-}
-function closeWin(id){
-  if(wins[id]){os.removeChild(wins[id]);delete wins[id];}
-  const dk=document.getElementById('dk-'+id);if(dk)dk.classList.remove('open');
-}
-function minWin(id){
-  if(wins[id]){const d=wins[id].style.display;wins[id].style.display=d==='none'?'':'none';}
-}
+    document.addEventListener('mouseup', () => dragging = null);
 
-let drag=null;
-function startDrag(e,id){
-  focusWin(id);
-  const w=wins[id],r=w.getBoundingClientRect(),or=os.getBoundingClientRect();
-  drag={id,ox:e.clientX-(r.left-or.left),oy:e.clientY-(r.top-or.top)};
-  e.preventDefault();
-}
-document.addEventListener('mousemove',e=>{
-  if(!drag)return;
-  const w=wins[drag.id],or=os.getBoundingClientRect();
-  w.style.left=(e.clientX-or.left-drag.ox)+'px';
-  w.style.top=Math.max(26,e.clientY-or.top-drag.oy)+'px';
-});
-document.addEventListener('mouseup',()=>{drag=null;});
+    function handleTerm(e) {
+        if (e.key === 'Enter') {
+            const out = document.getElementById('term-out');
+            const cmd = e.target.value.toLowerCase();
+            out.innerHTML += `<div>guest@os % ${e.target.value}</div>`;
+            if (cmd === 'help') out.innerHTML += `<div class="t-blue">Available: help, clear, date, whoami</div>`;
+            else if (cmd === 'date') out.innerHTML += `<div>${new Date().toLocaleString()}</div>`;
+            else if (cmd === 'clear') out.innerHTML = '';
+            else out.innerHTML += `<div class="t-red">Command not found: ${cmd}</div>`;
+            e.target.value = '';
+            out.scrollTop = out.scrollHeight;
+        }
+    }
 
-const termCmds={
-  help:()=>[`<span class="t-blue">Available commands:</span>`,`<span class="t-green">ls</span> &nbsp;<span class="t-green">pwd</span> &nbsp;<span class="t-green">whoami</span> &nbsp;<span class="t-green">date</span> &nbsp;<span class="t-green">echo</span> &lt;text&gt; &nbsp;<span class="t-green">clear</span> &nbsp;<span class="t-green">uname</span>`],
-  ls:()=>[`<span class="t-blue">Documents</span> &nbsp;<span class="t-blue">Downloads</span> &nbsp;<span class="t-blue">Pictures</span> &nbsp;<span class="t-blue">Projects</span>`,`readme.txt &nbsp;notes.md &nbsp;.bash_profile`],
-  pwd:()=>[`<span class="t-white">/Users/guest</span>`],
-  whoami:()=>[`<span class="t-white">guest</span>`],
-  uname:()=>[`<span class="t-white">ClaudeOS 1.0.0 Darwin Kernel Version 24.0</span>`],
-  date:()=>[`<span class="t-white">${new Date().toString()}</span>`],
-  clear:()=>{document.getElementById('to').innerHTML='';return[];},
-};
+    function showNotif(app, title, msg) {
+        const n = document.createElement('div');
+        n.className = 'notif';
+        n.innerHTML = `<strong>${app}</strong><div style="font-size:13px; font-weight:600;">${title}</div><div style="font-size:12px; opacity:0.8;">${msg}</div>`;
+        os.appendChild(n);
+        setTimeout(() => n.remove(), 4000);
+    }
 
-window.termKey=function(e){
-  if(e.key!=='Enter')return;
-  const inp=document.getElementById('ti');
-  const val=inp.value.trim();inp.value='';
-  const out=document.getElementById('to');
-  if(!out)return;
-  out.innerHTML+=`<div class="t-line"><span class="t-green">guest@ClaudeOS</span><span class="t-dim"> ~ %</span> <span class="t-white">${val}</span></div>`;
-  const[cmd,...args]=val.split(' ');
-  if(cmd==='echo'){out.innerHTML+=`<div class="t-line t-white">${args.join(' ')}</div>`;}
-  else if(termCmds[cmd]){const r=termCmds[cmd]();(r||[]).forEach(l=>{out.innerHTML+=`<div class="t-line">${l}</div>`;});}
-  else if(val){out.innerHTML+=`<div class="t-line t-red">-bash: ${cmd}: command not found</div>`;}
-  const tw=document.getElementById('tw');if(tw)tw.scrollTop=tw.scrollHeight;
-};
-
-let nTimer;
-function showNotif(app,title,msg){
-  document.querySelectorAll('.notif').forEach(n=>n.remove());
-  const n=document.createElement('div');
-  n.className='notif notif-enter';
-  n.innerHTML=`<div class="notif-app">${app}</div><div class="notif-title">${title}</div><div class="notif-msg">${msg}</div>`;
-  n.onclick=()=>n.remove();
-  os.appendChild(n);
-  clearTimeout(nTimer);nTimer=setTimeout(()=>n.remove(),3500);
-}
-window.showNotif=showNotif;
-window.toggleNotif=function(){showNotif('Notification Centre','No new notifications','You\'re all caught up.');};
-
-setTimeout(()=>showNotif('ClaudeOS','Welcome!','Double-click icons or use the dock.'),700);
-openApp('finder');
+    // Auto-open Finder on start
+    window.onload = () => openApp('finder');
 </script>
+
+</body>
+</html>

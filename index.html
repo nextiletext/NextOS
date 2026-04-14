@@ -7,23 +7,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
-        
-        body, html { 
-            width: 100%; height: 100%; overflow: hidden; background: #000;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-        }
-
-        #os {
-            width: 100vw; height: 100vh; position: relative; overflow: hidden;
-            background: linear-gradient(135deg, #0d1f3c 0%, #1a1035 100%);
-        }
-
-        #wallpaper {
-            position: absolute; inset: 0;
-            background: radial-gradient(circle at 20% 80%, #0e3460 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, #1e1060 0%, transparent 50%);
-            background-size: cover;
-        }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, sans-serif; }
+        #os { width: 100vw; height: 100vh; position: relative; background: #1a2744; }
+        #wallpaper { position: absolute; inset: 0; background: linear-gradient(135deg, #0d1f3c 0%, #1a1035 100%); }
 
         /* Menubar */
         #menubar {
@@ -32,61 +18,32 @@
             display: flex; align-items: center; padding: 0 15px; z-index: 10000;
             border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white;
         }
-        .mb-apple { width: 16px; height: 16px; margin-right: 15px; cursor: pointer; }
-        .mb-appname { font-size: 13px; font-weight: 700; margin-right: 15px; }
-        #mb-right { margin-left: auto; font-size: 12px; display: flex; gap: 15px; align-items: center; }
+        .mb-apple { width: 16px; height: 16px; margin-right: 15px; }
+        #clock { margin-left: auto; font-size: 12px; }
 
         /* Window System */
         .win {
             position: absolute; border-radius: 12px; overflow: hidden;
-            background: rgba(28, 28, 30, 0.8); backdrop-filter: blur(40px);
+            background: rgba(28, 28, 30, 0.85); backdrop-filter: blur(40px);
             border: 0.5px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 30px 60px rgba(0,0,0,0.4); display: flex; flex-direction: column;
         }
-        .win-bar {
-            height: 38px; display: flex; align-items: center; padding: 0 15px; 
-            gap: 8px; cursor: move; background: rgba(255, 255, 255, 0.05);
-        }
+        .win-bar { height: 38px; display: flex; align-items: center; padding: 0 15px; gap: 8px; cursor: move; background: rgba(255, 255, 255, 0.05); }
         .tb-btn { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; }
         .tb-close { background: #ff5f57; }
-        .tb-min { background: #febc2e; }
-        .tb-max { background: #28c840; }
-        .tb-title { position: absolute; left: 50%; transform: translateX(-50%); font-size: 13px; color: rgba(255,255,255,0.8); font-weight: 500; }
-        .win-content { flex: 1; overflow: hidden; }
+        .tb-title { position: absolute; left: 50%; transform: translateX(-50%); font-size: 13px; color: white; opacity: 0.8; }
+        .win-content { flex: 1; overflow: hidden; background: transparent; }
+
+        /* Safari Fix */
+        .safari-ui { display: flex; flex-direction: column; height: 100%; background: #fff; }
+        .safari-nav { padding: 8px; background: #f1f1f1; display: flex; gap: 10px; border-bottom: 1px solid #ddd; }
+        .safari-url { flex: 1; padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; }
 
         /* Dock */
-        #dock-container {
-            position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
-            padding: 8px; background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(30px) saturate(150%); border-radius: 20px;
-            border: 0.5px solid rgba(255, 255, 255, 0.2); z-index: 9999;
-        }
-        #dock { display: flex; gap: 10px; align-items: flex-end; }
-        .dk {
-            width: 50px; height: 50px; border-radius: 12px; cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.05); color: white;
-        }
-        .dk:hover { transform: scale(1.3) translateY(-10px); background: rgba(255,255,255,0.2); }
-        .dk i { width: 26px; height: 26px; }
-
-        /* Safari UI */
-        .safari-container { display: flex; flex-direction: column; height: 100%; background: #fff; }
-        .safari-nav { padding: 8px; background: #f1f1f1; border-bottom: 1px solid #ddd; display: flex; gap: 10px; align-items: center; }
-        .safari-input { flex: 1; padding: 5px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; outline: none; }
-
-        /* Calculator UI */
-        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); height: 100%; background: #1c1c1e; }
-        .calc-res { grid-column: span 4; padding: 20px; text-align: right; color: white; font-size: 32px; background: #1c1c1e; }
-        .calc-btn { border: 0.1px solid #333; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
-        .calc-btn:hover { background: #3a3a3c; }
-        .calc-op { background: #ff9f0a; }
-
-        /* Finder UI */
-        .finder-grid { display: grid; grid-template-columns: repeat(auto-fill, 90px); gap: 20px; padding: 20px; color: white; }
-        .f-item { text-align: center; cursor: pointer; font-size: 12px; }
-        .f-icon { color: #4facfe; margin-bottom: 8px; }
+        #dock-container { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); border-radius: 20px; border: 0.5px solid rgba(255,255,255,0.2); }
+        #dock { display: flex; gap: 12px; }
+        .dk { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); color: white; transition: 0.2s; cursor: pointer; }
+        .dk:hover { transform: scale(1.2) translateY(-10px); background: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -95,18 +52,14 @@
     <div id="wallpaper"></div>
     <div id="menubar">
         <i data-lucide="apple" class="mb-apple"></i>
-        <span class="mb-appname" id="active-app">Finder</span>
-        <div id="mb-right">
-            <i data-lucide="wifi" style="width:14px"></i>
-            <span id="clock">--:--</span>
-        </div>
+        <span style="font-size:13px; font-weight:700;">NextOS</span>
+        <span id="clock">--:--</span>
     </div>
 
     <div id="dock-container">
         <div id="dock">
             <div class="dk" onclick="openApp('finder')"><i data-lucide="folder"></i></div>
             <div class="dk" onclick="openApp('safari')"><i data-lucide="compass"></i></div>
-            <div class="dk" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
             <div class="dk" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
         </div>
     </div>
@@ -118,78 +71,47 @@
     const wins = {};
 
     const apps = {
-        finder: { title: 'Finder', w: 500, h: 350, html: `
-            <div class="finder-grid">
-                <div class="f-item"><i data-lucide="folder" class="f-icon"></i><br>Docs</div>
-                <div class="f-item"><i data-lucide="image" class="f-icon"></i><br>Photos</div>
-                <div class="f-item"><i data-lucide="file-text" class="f-icon"></i><br>Resume</div>
-            </div>` },
-        safari: { title: 'Safari', w: 800, h: 500, html: `
-            <div class="safari-container">
+        finder: { title: 'Finder', w: 500, h: 350, html: `<div style="padding:20px; color:white;"><h3>Files</h3><p>Your documents are safe.</p></div>` },
+        safari: { title: 'Safari', w: 800, h: 550, html: `
+            <div class="safari-ui">
                 <div class="safari-nav">
-                    <input class="safari-input" id="url-in" value="https://start.duckduckgo.com" onkeydown="if(event.key==='Enter') document.getElementById('s-frame').src=this.value">
+                    <input class="safari-url" id="url-in" value="https://www.wikipedia.org" onkeydown="if(event.key==='Enter') document.getElementById('s-frame').src=this.value">
                 </div>
-                <iframe id="s-frame" src="https://start.duckduckgo.com" style="flex:1; border:none;"></iframe>
+                <iframe id="s-frame" src="https://www.wikipedia.org" style="flex:1; border:none;"></iframe>
             </div>` },
-        calc: { title: 'Calculator', w: 260, h: 380, html: `
-            <div class="calc-grid">
-                <div class="calc-res" id="calc-display">0</div>
-                <div class="calc-btn" onclick="clearCalc()">AC</div>
-                <div class="calc-btn" onclick="press('/')">÷</div>
-                <div class="calc-btn" onclick="press('*')">×</div>
-                <div class="calc-btn calc-op" onclick="press('-')">−</div>
-                <div class="calc-btn" onclick="press('7')">7</div>
-                <div class="calc-btn" onclick="press('8')">8</div>
-                <div class="calc-btn" onclick="press('9')">9</div>
-                <div class="calc-btn calc-op" onclick="press('+')">+</div>
-                <div class="calc-btn" onclick="press('4')">4</div>
-                <div class="calc-btn" onclick="press('5')">5</div>
-                <div class="calc-btn" onclick="press('6')">6</div>
-                <div class="calc-btn calc-op" onclick="solve()" style="grid-row: span 2">=</div>
-                <div class="calc-btn" onclick="press('1')">1</div>
-                <div class="calc-btn" onclick="press('2')">2</div>
-                <div class="calc-btn" onclick="press('3')">3</div>
-                <div class="calc-btn" onclick="press('0')" style="grid-column: span 2">0</div>
-                <div class="calc-btn" onclick="press('.')">.</div>
-            </div>` },
-        settings: { title: 'Settings', w: 350, h: 250, html: `<div style="color:white; padding:30px; text-align:center;"><h3>NextOS Pro</h3><p style="opacity:0.6; margin-top:10px;">Version 2.0.4</p><p style="margin-top:20px;">System is up to date.</p></div>` }
+        settings: { title: 'Settings', w: 300, h: 200, html: `<div style="padding:20px; color:white;">NextOS v2.0<br>Scaling: 100%</div>` }
     };
 
     function openApp(id) {
-        if (wins[id]) { focusWin(id); return; }
+        if (wins[id]) return;
         const config = apps[id];
         const w = document.createElement('div');
         w.className = 'win';
         w.id = 'win-' + id;
         w.style.width = config.w + 'px';
         w.style.height = config.h + 'px';
-        w.style.left = (window.innerWidth/2 - config.w/2 + (Object.keys(wins).length * 20)) + 'px';
-        w.style.top = (window.innerHeight/2 - config.h/2 + (Object.keys(wins).length * 20)) + 'px';
+        w.style.left = '100px'; w.style.top = '100px';
         w.style.zIndex = ++zIndex;
 
         w.innerHTML = `
             <div class="win-bar" onmousedown="dragStart(event, '${id}')">
                 <div class="tb-btn tb-close" onclick="closeWin('${id}')"></div>
-                <div class="tb-btn tb-min"></div>
-                <div class="tb-btn tb-max"></div>
                 <span class="tb-title">${config.title}</span>
             </div>
             <div class="win-content">${config.html}</div>
         `;
         os.appendChild(w);
         wins[id] = w;
-        document.getElementById('active-app').innerText = config.title;
         lucide.createIcons();
     }
 
     function closeWin(id) { os.removeChild(wins[id]); delete wins[id]; }
-    function focusWin(id) { wins[id].style.zIndex = ++zIndex; document.getElementById('active-app').innerText = apps[id].title; }
 
     let drag = null;
     function dragStart(e, id) {
-        focusWin(id);
         const rect = wins[id].getBoundingClientRect();
         drag = { id, x: e.clientX - rect.left, y: e.clientY - rect.top };
+        wins[id].style.zIndex = ++zIndex;
     }
     document.addEventListener('mousemove', e => {
         if (!drag) return;
@@ -198,13 +120,6 @@
     });
     document.addEventListener('mouseup', () => drag = null);
 
-    // Calc Logic
-    let val = "";
-    window.press = (v) => { val += v; document.getElementById('calc-display').innerText = val; };
-    window.clearCalc = () => { val = ""; document.getElementById('calc-display').innerText = "0"; };
-    window.solve = () => { try { val = eval(val).toString(); document.getElementById('calc-display').innerText = val; } catch { val = ""; document.getElementById('calc-display').innerText = "Error"; } };
-
-    // Clock & Init
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); }, 1000);
     window.onload = () => { lucide.createIcons(); openApp('finder'); };
 </script>

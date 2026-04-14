@@ -3,63 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextOS Pro</title>
+    <title>NextOS Pro - Full Edition</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, sans-serif; }
-        #os { width: 100vw; height: 100vh; position: relative; background: #1a2744; }
-        #wallpaper { position: absolute; inset: 0; background: linear-gradient(135deg, #0d1f3c 0%, #1a1035 100%); }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; }
+        
+        #os { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+        #wallpaper { position: absolute; inset: 0; background: linear-gradient(135deg, #0d1f3c 0%, #1a1035 100%); z-index: 0; }
 
-        /* Menubar */
+        /* Menubar Restored */
         #menubar {
             position: absolute; top: 0; left: 0; right: 0; height: 30px;
-            background: rgba(12, 14, 20, 0.6); backdrop-filter: blur(20px);
+            background: rgba(12, 14, 20, 0.6); backdrop-filter: blur(25px);
             display: flex; align-items: center; padding: 0 15px; z-index: 10000;
             border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white;
         }
-        .mb-apple { width: 16px; height: 16px; margin-right: 15px; }
-        #clock { margin-left: auto; font-size: 12px; }
+        .mb-apple { width: 16px; height: 16px; margin-right: 18px; cursor: pointer; }
+        .mb-appname { font-size: 13px; font-weight: 700; margin-right: 15px; }
+        .mb-item { font-size: 13px; padding: 2px 10px; cursor: pointer; opacity: 0.9; }
+        .mb-item:hover { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        #mb-right { margin-left: auto; font-size: 12px; display: flex; gap: 15px; align-items: center; }
 
-        /* Window System */
+        /* Windows with Traffic Lights Restored */
         .win {
             position: absolute; border-radius: 12px; overflow: hidden;
             background: rgba(28, 28, 30, 0.85); backdrop-filter: blur(40px);
             border: 0.5px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4); display: flex; flex-direction: column;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5); display: flex; flex-direction: column;
         }
         .win-bar { height: 38px; display: flex; align-items: center; padding: 0 15px; gap: 8px; cursor: move; background: rgba(255, 255, 255, 0.05); }
         .tb-btn { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; }
         .tb-close { background: #ff5f57; }
-        .tb-title { position: absolute; left: 50%; transform: translateX(-50%); font-size: 13px; color: white; opacity: 0.8; }
-        .win-content { flex: 1; overflow: hidden; background: transparent; }
+        .tb-min { background: #febc2e; }
+        .tb-max { background: #28c840; }
+        .tb-title { position: absolute; left: 50%; transform: translateX(-50%); font-size: 13px; color: white; font-weight: 600; opacity: 0.8; }
+        .win-content { flex: 1; overflow: hidden; }
 
-        /* Safari Fix */
+        /* Dock with Hover Effects */
+        #dock-container {
+            position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+            padding: 8px; background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(30px) saturate(150%); border-radius: 22px;
+            border: 0.5px solid rgba(255, 255, 255, 0.2); z-index: 9999;
+        }
+        #dock { display: flex; gap: 12px; align-items: flex-end; }
+        .dk {
+            width: 52px; height: 52px; border-radius: 14px; cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.1); color: white;
+        }
+        .dk:hover { transform: scale(1.3) translateY(-10px); background: rgba(255,255,255,0.2); }
+        .dk i { width: 28px; height: 28px; }
+
+        /* Safari & Finder UI */
         .safari-ui { display: flex; flex-direction: column; height: 100%; background: #fff; }
-        .safari-nav { padding: 8px; background: #f1f1f1; display: flex; gap: 10px; border-bottom: 1px solid #ddd; }
-        .safari-url { flex: 1; padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; }
-
-        /* Dock */
-        #dock-container { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); border-radius: 20px; border: 0.5px solid rgba(255,255,255,0.2); }
-        #dock { display: flex; gap: 12px; }
-        .dk { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); color: white; transition: 0.2s; cursor: pointer; }
-        .dk:hover { transform: scale(1.2) translateY(-10px); background: rgba(255,255,255,0.2); }
+        .safari-nav { padding: 8px; background: #f1f1f1; border-bottom: 1px solid #ddd; display: flex; gap: 10px; }
+        .safari-url { flex: 1; border-radius: 6px; border: 1px solid #ccc; padding: 4px 12px; font-size: 12px; }
+        
+        .finder-grid { display: grid; grid-template-columns: repeat(auto-fill, 90px); gap: 25px; padding: 25px; color: white; }
+        .f-item { text-align: center; cursor: pointer; font-size: 12px; }
+        .f-icon { color: #4facfe; margin-bottom: 8px; width: 32px; height: 32px; }
     </style>
 </head>
 <body>
 
 <div id="os">
     <div id="wallpaper"></div>
+
     <div id="menubar">
         <i data-lucide="apple" class="mb-apple"></i>
-        <span style="font-size:13px; font-weight:700;">NextOS</span>
-        <span id="clock">--:--</span>
+        <span class="mb-appname" id="active-app">Finder</span>
+        <span class="mb-item">File</span>
+        <span class="mb-item">Edit</span>
+        <span class="mb-item">View</span>
+        <span class="mb-item">Go</span>
+        <div id="mb-right">
+            <i data-lucide="wifi" style="width:14px"></i>
+            <i data-lucide="battery" style="width:14px"></i>
+            <span id="clock">--:--</span>
+        </div>
     </div>
 
     <div id="dock-container">
         <div id="dock">
             <div class="dk" onclick="openApp('finder')"><i data-lucide="folder"></i></div>
             <div class="dk" onclick="openApp('safari')"><i data-lucide="compass"></i></div>
+            <div class="dk" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
             <div class="dk" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
         </div>
     </div>
@@ -71,47 +102,59 @@
     const wins = {};
 
     const apps = {
-        finder: { title: 'Finder', w: 500, h: 350, html: `<div style="padding:20px; color:white;"><h3>Files</h3><p>Your documents are safe.</p></div>` },
-        safari: { title: 'Safari', w: 800, h: 550, html: `
+        finder: { title: 'Finder', w: 550, h: 400, html: `
+            <div class="finder-grid">
+                <div class="f-item"><i data-lucide="folder" class="f-icon"></i><br>Documents</div>
+                <div class="f-item"><i data-lucide="image" class="f-icon"></i><br>Photos</div>
+                <div class="f-item"><i data-lucide="film" class="f-icon"></i><br>Movies</div>
+                <div class="f-item"><i data-lucide="download" class="f-icon"></i><br>Downloads</div>
+            </div>` },
+        safari: { title: 'Safari', w: 850, h: 550, html: `
             <div class="safari-ui">
                 <div class="safari-nav">
-                    <input class="safari-url" id="url-in" value="https://www.wikipedia.org" onkeydown="if(event.key==='Enter') document.getElementById('s-frame').src=this.value">
+                    <input class="safari-url" value="https://www.wikipedia.org" onkeydown="if(event.key==='Enter') document.getElementById('s-frame').src=this.value">
                 </div>
                 <iframe id="s-frame" src="https://www.wikipedia.org" style="flex:1; border:none;"></iframe>
             </div>` },
-        settings: { title: 'Settings', w: 300, h: 200, html: `<div style="padding:20px; color:white;">NextOS v2.0<br>Scaling: 100%</div>` }
+        calc: { title: 'Calculator', w: 260, h: 380, html: `<div style="color:white; padding:40px; text-align:center;">Calculator Component</div>` },
+        settings: { title: 'Settings', w: 350, h: 250, html: `<div style="color:white; padding:30px;"><h3>NextOS Settings</h3><p>Version 2.5.0</p></div>` }
     };
 
     function openApp(id) {
-        if (wins[id]) return;
+        if (wins[id]) { focusWin(id); return; }
         const config = apps[id];
         const w = document.createElement('div');
         w.className = 'win';
         w.id = 'win-' + id;
         w.style.width = config.w + 'px';
         w.style.height = config.h + 'px';
-        w.style.left = '100px'; w.style.top = '100px';
+        w.style.left = (window.innerWidth/2 - config.w/2 + (Object.keys(wins).length * 20)) + 'px';
+        w.style.top = (window.innerHeight/2 - config.h/2 + (Object.keys(wins).length * 20)) + 'px';
         w.style.zIndex = ++zIndex;
 
         w.innerHTML = `
             <div class="win-bar" onmousedown="dragStart(event, '${id}')">
                 <div class="tb-btn tb-close" onclick="closeWin('${id}')"></div>
+                <div class="tb-btn tb-min"></div>
+                <div class="tb-btn tb-max"></div>
                 <span class="tb-title">${config.title}</span>
             </div>
             <div class="win-content">${config.html}</div>
         `;
         os.appendChild(w);
         wins[id] = w;
+        document.getElementById('active-app').innerText = config.title;
         lucide.createIcons();
     }
 
     function closeWin(id) { os.removeChild(wins[id]); delete wins[id]; }
+    function focusWin(id) { wins[id].style.zIndex = ++zIndex; document.getElementById('active-app').innerText = apps[id].title; }
 
     let drag = null;
     function dragStart(e, id) {
+        focusWin(id);
         const rect = wins[id].getBoundingClientRect();
         drag = { id, x: e.clientX - rect.left, y: e.clientY - rect.top };
-        wins[id].style.zIndex = ++zIndex;
     }
     document.addEventListener('mousemove', e => {
         if (!drag) return;
@@ -120,7 +163,10 @@
     });
     document.addEventListener('mouseup', () => drag = null);
 
-    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); }, 1000);
+    setInterval(() => { 
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); 
+    }, 1000);
+
     window.onload = () => { lucide.createIcons(); openApp('finder'); };
 </script>
 </body>

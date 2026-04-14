@@ -3,55 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextOS - Genie Effect</title>
+    <title>NextOS - Pro Edition</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, sans-serif; }
-        #os { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
-        #wallpaper { position: absolute; inset: 0; background: linear-gradient(135deg, #0d1f3c 0%, #1a1035 100%); z-index: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; }
+        #os { width: 100vw; height: 100vh; position: relative; background: linear-gradient(135deg, #0d1f3c 0%, #1a1035 100%); }
 
         /* Menubar */
         #menubar {
-            position: absolute; top: 0; left: 0; right: 0; height: 30px;
+            position: absolute; top: 0; width: 100%; height: 30px;
             background: rgba(12, 14, 20, 0.6); backdrop-filter: blur(25px);
             display: flex; align-items: center; padding: 0 15px; z-index: 10000;
-            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white;
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white; font-size: 13px;
         }
 
-        /* Window System with Genie Animation */
+        /* Window System */
         .win {
             position: absolute; border-radius: 12px; overflow: hidden;
             background: rgba(28, 28, 30, 0.95); backdrop-filter: blur(40px);
             border: 0.5px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 30px 60px rgba(0,0,0,0.5); display: flex; flex-direction: column;
-            
-            /* The Genie Magic */
             transition: transform 0.4s cubic-bezier(0.44, 0.05, 0.55, 0.95), opacity 0.3s ease;
-            transform-origin: bottom center; /* Sucks down toward the dock */
-            opacity: 1;
-            transform: scale(1) translateY(0);
+            transform-origin: bottom center; z-index: 1000;
         }
+        .win.genie-hide { transform: scale(0) translateY(500px); opacity: 0; pointer-events: none; }
+        .win.fullscreen { width: 100vw !important; height: calc(100vh - 30px) !important; top: 30px !important; left: 0 !important; border-radius: 0; }
 
-        /* State when closed/closing */
-        .win.closing {
-            transform: scale(0.1) translateY(500px);
-            opacity: 0;
-            pointer-events: none;
-        }
-
+        /* Traffic Lights with Hover Symbols */
         .win-bar { height: 38px; display: flex; align-items: center; padding: 0 15px; gap: 8px; cursor: move; background: rgba(255, 255, 255, 0.05); }
-        .tb-btn { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; }
-        .tb-close { background: #ff5f57; }
-        .tb-min { background: #febc2e; }
-        .tb-max { background: #28c840; }
-        .win-content { flex: 1; overflow: hidden; }
+        .traffic-lights { display: flex; gap: 8px; }
+        .tb { width: 12px; height: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: rgba(0,0,0,0); transition: color 0.2s; cursor: pointer; }
+        .win-bar:hover .tb { color: rgba(0,0,0,0.5); }
+        .tb-close { background: #ff5f57; } .tb-min { background: #febc2e; } .tb-max { background: #28c840; }
+
+        /* Apps */
+        .win-content { flex: 1; overflow: hidden; display: flex; color: white; }
+        .calc-body { width: 100%; display: flex; flex-direction: column; background: #1c1c1e; }
+        .calc-screen { padding: 20px; text-align: right; font-size: 40px; }
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); flex: 1; }
+        .c-btn { border: 0.1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
+        .c-btn:hover { background: #3a3a3c; }
+        .c-op { background: #ff9f0a; }
+
+        /* Resizer */
+        .resizer { position: absolute; width: 15px; height: 15px; right: 0; bottom: 0; cursor: nwse-resize; z-index: 10; }
 
         /* Dock */
         #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(30px); border-radius: 22px; border: 0.5px solid rgba(255,255,255,0.2); z-index: 9999; }
         #dock { display: flex; gap: 12px; }
         .dk { width: 52px; height: 52px; border-radius: 14px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); color: white; }
-        .dk:hover { transform: scale(1.2) translateY(-5px); }
+        .dk:hover { transform: scale(1.3) translateY(-10px); background: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -59,9 +61,10 @@
 <div id="os">
     <div id="wallpaper"></div>
     <div id="menubar">
-        <i data-lucide="apple" style="width:16px; margin-right:15px; color:white;"></i>
-        <span id="active-app" style="color:white; font-size:13px; font-weight:700;">Finder</span>
-        <span id="clock" style="margin-left:auto; color:white; font-size:12px;">--:--</span>
+        <i data-lucide="apple" style="width:16px; margin-right:15px;"></i>
+        <span id="active-app" style="font-weight:700; margin-right:15px;">Finder</span>
+        <span>File &nbsp; Edit &nbsp; View &nbsp; Window</span>
+        <span id="clock" style="margin-left:auto;">--:--</span>
     </div>
 
     <div id="dock-container">
@@ -79,83 +82,67 @@
     const wins = {};
 
     const apps = {
-        finder: { title: 'Finder', w: 600, h: 400, html: `<div style="padding:20px; color:white;">Finder Content</div>` },
-        safari: { title: 'Safari', w: 800, h: 500, html: `<iframe src="https://www.wikipedia.org" style="width:100%; height:100%; border:none;"></iframe>` },
-        calc: { title: 'Calculator', w: 260, h: 380, html: `<div style="color:white; padding:20px;">Calc</div>` }
+        finder: { title: 'Finder', w: 600, h: 400, html: `<div style="padding:20px;">Finder Content...</div>` },
+        safari: { title: 'Safari', w: 850, h: 550, html: `<iframe src="https://www.wikipedia.org" style="width:100%; height:100%; border:none; background:white;"></iframe>` },
+        calc: { title: 'Calculator', w: 260, h: 380, html: `
+            <div class="calc-body">
+                <div class="calc-screen" id="c-scr">0</div>
+                <div class="calc-grid">
+                    <div class="c-btn" onclick="clearC()">AC</div><div class="c-btn" onclick="p('/')">÷</div><div class="c-btn" onclick="p('*')">×</div><div class="c-btn c-op" onclick="p('-')">−</div>
+                    <div class="c-btn" onclick="p('7')">7</div><div class="c-btn" onclick="p('8')">8</div><div class="c-btn" onclick="p('9')">9</div><div class="c-btn c-op" onclick="p('+')">+</div>
+                    <div class="c-btn" onclick="p('4')">4</div><div class="c-btn" onclick="p('5')">5</div><div class="c-btn" onclick="p('6')">6</div><div class="c-btn c-op" onclick="solv()" style="grid-row:span 2">=</div>
+                    <div class="c-btn" onclick="p('1')">1</div><div class="c-btn" onclick="p('2')">2</div><div class="c-btn" onclick="p('3')">3</div>
+                    <div class="c-btn" onclick="p('0')" style="grid-column:span 2">0</div><div class="c-btn" onclick="p('.')">.</div>
+                </div>
+            </div>` }
     };
 
     function openApp(id) {
-        if (wins[id]) {
-            const w = wins[id];
-            w.classList.remove('closing');
-            focusWin(id);
-            return;
-        }
-        
+        if (wins[id]) { wins[id].classList.remove('genie-hide'); focusWin(id); return; }
         const config = apps[id];
         const w = document.createElement('div');
-        w.className = 'win closing'; // Start closed for the "pop out" animation
+        w.className = 'win genie-hide';
         w.id = 'win-' + id;
-        w.style.width = config.w + 'px';
-        w.style.height = config.h + 'px';
-        w.style.left = (window.innerWidth/2 - config.w/2) + 'px';
-        w.style.top = '100px';
+        w.style.width = config.w + 'px'; w.style.height = config.h + 'px';
+        w.style.left = '100px'; w.style.top = '100px';
         w.style.zIndex = ++zIndex;
 
         w.innerHTML = `
-            <div class="win-bar" onmousedown="dragStart(event, '${id}')">
-                <div class="tb-btn tb-close" onclick="closeWin('${id}')"></div>
-                <div class="tb-btn tb-min" onclick="closeWin('${id}')"></div>
-                <div class="tb-btn tb-max"></div>
-                <span style="margin:auto; font-size:12px; color:white; opacity:0.7;">${config.title}</span>
+            <div class="win-bar" onmousedown="dragS(event, '${id}')">
+                <div class="traffic-lights">
+                    <div class="tb tb-close" onclick="closeW('${id}')">×</div>
+                    <div class="tb tb-min" onclick="minW('${id}')">−</div>
+                    <div class="tb tb-max" onclick="maxW('${id}')">▲</div>
+                </div>
+                <span style="margin:auto; font-size:12px; opacity:0.7;">${config.title}</span>
             </div>
             <div class="win-content">${config.html}</div>
+            <div class="resizer" onmousedown="resS(event, '${id}')"></div>
         `;
-        
-        os.appendChild(w);
-        wins[id] = w;
-        
-        // Trigger the opening animation
-        setTimeout(() => {
-            w.classList.remove('closing');
-        }, 10);
-        
+        os.appendChild(w); wins[id] = w;
+        setTimeout(() => w.classList.remove('genie-hide'), 10);
         lucide.createIcons();
     }
 
-    function closeWin(id) {
-        const w = wins[id];
-        w.classList.add('closing'); // Trigger the "suck back" animation
-        
-        // Remove from DOM after animation finishes
-        setTimeout(() => {
-            if(w.classList.contains('closing')) {
-                os.removeChild(w);
-                delete wins[id];
-            }
-        }, 400); 
-    }
+    function closeW(id) { wins[id].classList.add('genie-hide'); setTimeout(() => { os.removeChild(wins[id]); delete wins[id]; }, 400); }
+    function minW(id) { wins[id].classList.add('genie-hide'); }
+    function maxW(id) { wins[id].classList.toggle('fullscreen'); }
+    function focusWin(id) { wins[id].style.zIndex = ++zIndex; document.getElementById('active-app').innerText = apps[id].title; }
 
-    function focusWin(id) { 
-        wins[id].style.zIndex = ++zIndex; 
-        document.getElementById('active-app').innerText = apps[id].title;
-    }
+    let dWin = null, rWin = null, offset = {x:0, y:0};
+    function dragS(e, id) { focusWin(id); dWin = wins[id]; offset = { x: e.clientX - dWin.offsetLeft, y: e.clientY - dWin.offsetTop }; }
+    function resS(e, id) { rWin = wins[id]; e.preventDefault(); }
 
-    let drag = null, offset = {x:0, y:0};
-    function dragStart(e, id) { 
-        focusWin(id); 
-        drag = wins[id]; 
-        offset = { x: e.clientX - drag.offsetLeft, y: e.clientY - drag.offsetTop }; 
-    }
-    
     document.addEventListener('mousemove', e => {
-        if (drag) {
-            drag.style.left = (e.clientX - offset.x) + 'px';
-            drag.style.top = (e.clientY - offset.y) + 'px';
-        }
+        if (dWin && !dWin.classList.contains('fullscreen')) { dWin.style.left = (e.clientX - offset.x) + 'px'; dWin.style.top = (e.clientY - offset.y) + 'px'; }
+        if (rWin) { rWin.style.width = (e.clientX - rWin.offsetLeft) + 'px'; rWin.style.height = (e.clientY - rWin.offsetTop) + 'px'; }
     });
+    document.addEventListener('mouseup', () => { dWin = null; rWin = null; });
 
-    document.addEventListener('mouseup', () => drag = null);
+    let val = "";
+    window.p = (v) => { val += v; document.getElementById('c-scr').innerText = val; };
+    window.clearC = () => { val = ""; document.getElementById('c-scr').innerText = "0"; };
+    window.solv = () => { try { val = eval(val).toString(); document.getElementById('c-scr').innerText = val; } catch { val = ""; document.getElementById('c-scr').innerText = "Error"; } };
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }, 1000);
     window.onload = () => { lucide.createIcons(); openApp('finder'); };

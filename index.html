@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Pro Max (Full Restore)</title>
+    <title>NextOS Pro Max - Fully Loaded</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -20,7 +20,7 @@
             filter: brightness(var(--brightness));
         }
 
-        /* FULL MENUBAR RESTORED */
+        /* MENUBAR */
         #menubar {
             position: absolute; top: 0; width: 100%; height: 28px;
             background: rgba(20, 20, 25, 0.7); backdrop-filter: blur(30px);
@@ -30,7 +30,7 @@
         .m-item { margin-right: 15px; cursor: default; }
         .m-bold { font-weight: 700; margin-right: 20px; }
 
-        /* WINDOWS & TRAFFIC LIGHTS */
+        /* WINDOWS */
         .win {
             position: absolute; border-radius: 12px; overflow: hidden;
             background: rgba(30, 30, 35, 0.98); backdrop-filter: blur(50px);
@@ -47,19 +47,25 @@
 
         .win-content { flex: 1; overflow: hidden; color: white; background: #1c1c1e; position: relative; }
 
-        /* DOCK & ICONS RESTORED */
-        #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(30px); border-radius: 20px; z-index: 9999; border: 0.5px solid rgba(255,255,255,0.2); }
-        #dock { display: flex; gap: 10px; align-items: center; }
-        .dk { width: 50px; height: 50px; border-radius: 12px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.15); }
-        .dk:hover { transform: scale(1.2) translateY(-5px); background: rgba(255,255,255,0.3); }
-        .dk i { width: 28px; height: 28px; }
+        /* APP-SPECIFIC */
+        .term-body { padding: 10px; font-family: 'Courier New', monospace; font-size: 14px; height: 100%; color: #00ff00; overflow-y: auto; }
+        .term-line { margin-bottom: 5px; word-break: break-all; }
+        #term-prompt { display: flex; gap: 8px; }
+        #term-input { background: none; border: none; color: #00ff00; font-family: inherit; outline: none; flex: 1; }
 
-        /* APP STYLES */
-        .term-body { padding: 15px; font-family: 'Courier New', monospace; font-size: 14px; height: 100%; overflow-y: auto; color: #00ff00; }
         .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); height: 100%; background: #333; }
         .c-btn { border: 0.1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
-        .browser-nav { display: flex; gap: 10px; padding: 8px; background: #2c2c2e; align-items: center; }
-        .url-input { flex: 1; background: #1c1c1e; border: 1px solid #3a3a3c; border-radius: 6px; color: white; padding: 4px 10px; font-size: 12px; outline: none; }
+
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; padding: 15px; text-align: center; }
+        .cal-header { padding: 15px 0; font-weight: bold; font-size: 18px; text-align: center; }
+        .cal-day { padding: 8px; border-radius: 6px; font-size: 13px; }
+        .cal-today { background: #007aff; font-weight: bold; }
+
+        /* DOCK */
+        #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(30px); border-radius: 20px; z-index: 9999; }
+        #dock { display: flex; gap: 12px; align-items: center; }
+        .dk { width: 52px; height: 52px; border-radius: 13px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.15); }
+        .dk:hover { transform: scale(1.2) translateY(-5px); background: rgba(255,255,255,0.3); }
     </style>
 </head>
 <body>
@@ -68,12 +74,7 @@
     <div id="menubar">
         <i data-lucide="apple" style="width:14px; margin-right:15px;"></i>
         <span class="m-bold" id="active-app-name">Finder</span>
-        <span class="m-item">File</span>
-        <span class="m-item">Edit</span>
-        <span class="m-item">View</span>
-        <span class="m-item">Go</span>
-        <span class="m-item">Window</span>
-        <span class="m-item">Help</span>
+        <span class="m-item">File</span><span class="m-item">Edit</span><span class="m-item">View</span><span class="m-item">Go</span><span class="m-item">Window</span><span class="m-item">Help</span>
         <span id="clock" style="margin-left:auto; font-weight: 500;">--:--</span>
     </div>
 
@@ -95,12 +96,12 @@
     const wins = {};
 
     const apps = {
-        browser: { title: 'Safari', w: 850, h: 550, html: `<div class="browser-nav"><input type="text" id="url-bar" class="url-input" value="https://www.bing.com" onkeydown="if(event.key==='Enter') loadUrl()"><button onclick="loadUrl()" style="background:none;border:none;color:white;cursor:pointer;"><i data-lucide="arrow-right" style="width:16px;"></i></button><button onclick="window.open(document.getElementById('url-bar').value,'_blank')" style="background:none;border:none;color:white;cursor:pointer;"><i data-lucide="external-link" style="width:16px;"></i></button></div><iframe id="browser-frame" src="https://www.bing.com" style="width:100%; height:calc(100% - 40px); border:none; background:white;"></iframe>` },
-        calc: { title: 'Calculator', w: 260, h: 400, html: `<div style="height:100%; display:flex; flex-direction:column;"><div id="c-scr" style="padding:25px; text-align:right; font-size:36px; background:#111; color:white;">0</div><div class="calc-grid"><div class="c-btn" onclick="p('7')">7</div><div class="c-btn" onclick="p('8')">8</div><div class="c-btn" onclick="p('9')">9</div><div class="c-btn" style="background:#ff9f0a" onclick="p('/')">÷</div><div class="c-btn" onclick="p('4')">4</div><div class="c-btn" onclick="p('5')">5</div><div class="c-btn" onclick="p('6')">6</div><div class="c-btn" style="background:#ff9f0a" onclick="p('*')">×</div><div class="c-btn" onclick="p('1')">1</div><div class="c-btn" onclick="p('2')">2</div><div class="c-btn" onclick="p('3')">3</div><div class="c-btn" style="background:#ff9f0a" onclick="p('-')">-</div><div class="c-btn" onclick="p('0')" style="grid-column:span 2">0</div><div class="c-btn" onclick="solv()">=</div><div class="c-btn" style="background:#ff9f0a" onclick="p('+')">+</div></div></div>` },
-        calendar: { title: 'Calendar', w: 400, h: 420, html: `<div id="cal-app" style="padding:20px; text-align:center;"><h2>April 2026</h2><p>Restoring Full View...</p></div>` },
-        terminal: { title: 'Terminal', w: 500, h: 300, html: `<div class="term-body">NextOS Terminal v1.1.0<br>Icons Restored successfully.<br>nextos@user:~$ <input type="text" id="term-in" style="background:none; border:none; color:#00ff00; outline:none; width:70%;" onkeydown="if(event.key==='Enter') runCmd()"></div>` },
-        weather: { title: 'Weather', w: 300, h: 350, html: `<div style="padding:40px; text-align:center; background:linear-gradient(#4facfe, #00f2fe); height:100%; color:white;"><i data-lucide="sun" style="width:50px;height:50px;"></i><h1>72°</h1><p>Sunny</p></div>` },
-        settings: { title: 'Settings', w: 400, h: 200, html: `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` }
+        browser: { title: 'Safari', w: 850, h: 550, content: `<div style="display:flex; flex-direction:column; height:100%;"><div style="display:flex; gap:10px; padding:8px; background:#2c2c2e; align-items:center;"><input type="text" id="url-bar" style="flex:1; background:#1c1c1e; border:1px solid #3a3a3c; border-radius:6px; color:white; padding:4px 10px; font-size:12px; outline:none;" value="https://www.bing.com" onkeydown="if(event.key==='Enter') loadUrl()"><button onclick="loadUrl()" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="arrow-right" style="width:16px;"></i></button><button onclick="window.open(document.getElementById('url-bar').value,'_blank')" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="external-link" style="width:16px;"></i></button></div><iframe id="browser-frame" src="https://www.bing.com" style="flex:1; border:none; background:white;"></iframe></div>` },
+        calc: { title: 'Calculator', w: 260, h: 400, content: `<div style="height:100%; display:flex; flex-direction:column;"><div id="c-scr" style="padding:25px; text-align:right; font-size:36px; background:#111; color:white;">0</div><div class="calc-grid"><div class="c-btn" onclick="p('7')">7</div><div class="c-btn" onclick="p('8')">8</div><div class="c-btn" onclick="p('9')">9</div><div class="c-btn" style="background:#ff9f0a" onclick="p('/')">÷</div><div class="c-btn" onclick="p('4')">4</div><div class="c-btn" onclick="p('5')">5</div><div class="c-btn" onclick="p('6')">6</div><div class="c-btn" style="background:#ff9f0a" onclick="p('*')">×</div><div class="c-btn" onclick="p('1')">1</div><div class="c-btn" onclick="p('2')">2</div><div class="c-btn" onclick="p('3')">3</div><div class="c-btn" style="background:#ff9f0a" onclick="p('-')">-</div><div class="c-btn" onclick="p('0')" style="grid-column:span 2">0</div><div class="c-btn" onclick="solv()">=</div><div class="c-btn" style="background:#ff9f0a" onclick="p('+')">+</div></div></div>` },
+        calendar: { title: 'Calendar', w: 350, h: 400, content: `<div class="cal-header">April 2026</div><div class="cal-grid" id="cal-box"></div>` },
+        terminal: { title: 'Terminal', w: 550, h: 350, content: `<div class="term-body" id="term-body"><div class="term-line">NextOS Kernel v2.0.4 - Command Prompt Active</div><div class="term-line">Type 'help' for commands.</div><div id="term-prompt"><span>nextos@user:~$</span><input type="text" id="term-input" autofocus onkeydown="if(event.key==='Enter') runCmd(this.value)"></div></div>` },
+        weather: { title: 'Weather', w: 300, h: 350, content: `<div style="padding:40px; text-align:center; background:linear-gradient(#4facfe, #00f2fe); height:100%; color:white;"><i data-lucide="sun" style="width:50px;height:50px;margin-bottom:10px;"></i><h1>72°</h1><p>Sunny in Cupertino</p></div>` },
+        settings: { title: 'Settings', w: 400, h: 220, content: `<div style="padding:25px;"><h3>System Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%; margin-top:15px;"></div>` }
     };
 
     function openApp(id) {
@@ -109,13 +110,36 @@
         const w = document.createElement('div');
         w.className = 'win genie-hide'; w.id = 'win-' + id;
         w.style.width = config.w + 'px'; w.style.height = config.h + 'px';
-        w.style.left = '150px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
-        w.innerHTML = `<div class="win-bar" onmousedown="startDrag(event,'${id}')"><div class="traffic-lights"><div class="tb tb-close" onclick="closeApp('${id}')">×</div><div class="tb tb-min" onclick="minApp('${id}')">−</div><div class="tb tb-max">⤢</div></div><span style="margin:auto;font-size:12px;font-weight:600;color:white;">${config.title}</span></div><div class="win-content">${config.html}</div>`;
+        w.style.left = (100 + (zIndex - 1000) * 20) + 'px'; w.style.top = (80 + (zIndex - 1000) * 10) + 'px';
+        w.style.zIndex = ++zIndex;
+        w.innerHTML = `<div class="win-bar" onmousedown="startDrag(event,'${id}')"><div class="traffic-lights"><div class="tb tb-close" onclick="closeApp('${id}')">×</div><div class="tb tb-min" onclick="minApp('${id}')">−</div><div class="tb tb-max">⤢</div></div><span style="margin:auto;font-size:12px;font-weight:600;color:white;">${config.title}</span></div><div class="win-content">${config.content}</div>`;
         os.appendChild(w); wins[id] = w;
-        setTimeout(() => { w.classList.remove('genie-hide'); lucide.createIcons(); }, 10);
+        if(id === 'calendar') renderCal();
+        setTimeout(() => { w.classList.remove('genie-hide'); lucide.createIcons(); if(id === 'terminal') document.getElementById('term-input').focus(); }, 10);
     }
 
-    window.runCmd = () => { let input = document.getElementById('term-in'); input.value = ''; };
+    function renderCal() {
+        const box = document.getElementById('cal-box');
+        const days = ['S','M','T','W','T','F','S'];
+        days.forEach(d => box.innerHTML += `<div style="opacity:0.5; font-size:11px;">${d}</div>`);
+        for(let i=1; i<=30; i++) box.innerHTML += `<div class="cal-day ${i===15?'cal-today':''}">${i}</div>`;
+    }
+
+    window.runCmd = (val) => {
+        const body = document.getElementById('term-body');
+        const prompt = document.getElementById('term-prompt');
+        const line = document.createElement('div');
+        line.className = 'term-line';
+        line.innerHTML = `nextos@user:~$ ${val}`;
+        body.insertBefore(line, prompt);
+        if(val.toLowerCase() === 'help') {
+            const res = document.createElement('div'); res.className = 'term-line';
+            res.innerHTML = "Commands: help, clear, whoami, open [appname]";
+            body.insertBefore(res, prompt);
+        }
+        document.getElementById('term-input').value = '';
+    };
+
     window.loadUrl = () => { let u = document.getElementById('url-bar').value; if(!u.startsWith('http')) u = 'https://'+u; document.getElementById('browser-frame').src = u; };
     let v = "";
     window.p = (n) => { v += n; document.getElementById('c-scr').innerText = v; };

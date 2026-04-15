@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - True Internal Browser</title>
+    <title>NextOS - Browser Final Fix</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -45,7 +45,7 @@
         .tb-max { background: #28c840; } .tb-max::before { content: '⤢'; }
 
         /* BROWSER INTERFACE */
-        .browser-nav { display: flex; align-items: center; padding: 8px; background: #2c2c2e; gap: 10px; }
+        .browser-nav { display: flex; align-items: center; padding: 8px; background: #2c2c2e; gap: 12px; }
         .browser-url { flex: 1; background: #1c1c1e; border: none; border-radius: 6px; padding: 6px 12px; color: white; outline: none; font-size: 13px; }
 
         /* DOCK */
@@ -97,16 +97,15 @@
             title: 'Safari', w: 900, h: 600, 
             content: () => `
                 <div class="browser-nav">
-                    <i data-lucide="chevron-left" style="cursor:pointer; width:18px;"></i>
-                    <i data-lucide="chevron-right" style="cursor:pointer; width:18px;"></i>
-                    <input class="browser-url" id="url-bar" value="https://duckduckgo.com" onkeydown="if(event.key==='Enter') loadInternalUrl(this.value)">
-                    <i data-lucide="rotate-cw" style="cursor:pointer; width:18px;" onclick="loadInternalUrl(document.getElementById('url-bar').value)"></i>
+                    <i data-lucide="home" style="cursor:pointer; width:18px;" onclick="loadSearch('https://www.google.com/search?igu=1')"></i>
+                    <input class="browser-url" id="url-bar" value="Search Google..." onfocus="this.value=''" onkeydown="if(event.key==='Enter') loadSearch('https://www.google.com/search?igu=1&q=' + encodeURIComponent(this.value))">
+                    <i data-lucide="rotate-cw" style="cursor:pointer; width:18px;" onclick="loadSearch(document.getElementById('browser-frame').src)"></i>
                 </div>
-                <iframe id="browser-frame" src="https://duckduckgo.com/?kae=d" style="width:100%; height:calc(100% - 45px); border:none; background:white;"></iframe>` 
+                <iframe id="browser-frame" src="https://www.google.com/search?igu=1" style="width:100%; height:calc(100% - 45px); border:none; background:white;"></iframe>` 
         },
         calc: { title: 'Calculator', w: 280, h: 420, content: () => `<div id="d" style="padding:20px; font-size:40px; text-align:right; height:70px; background:#111;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.2px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333;">${b}</div>`).join('')}</div>` },
         calendar: { title: 'Calendar', w: 350, h: 400, content: () => `<div id="cal-root"></div>` },
-        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v15.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
+        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v16.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
         weather: { title: 'Weather', w: 300, h: 400, content: () => `<div style="height:100%; background:linear-gradient(#1d3ede, #01befe); padding:40px; text-align:center;"><i data-lucide="sun" style="width:50px; height:50px;"></i><h1>22°C</h1><p>Sunny</p></div>` },
         settings: { title: 'Settings', w: 400, h: 250, content: () => `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` }
     };
@@ -116,10 +115,8 @@
     function toggleMenu() { dropdown.classList.toggle('active'); }
     function closeMenu() { dropdown.classList.remove('active'); }
 
-    function loadInternalUrl(val) {
-        let url = val.startsWith('http') ? val : 'https://duckduckgo.com/?q=' + encodeURIComponent(val);
+    function loadSearch(url) {
         document.getElementById('browser-frame').src = url;
-        document.getElementById('url-bar').value = url;
     }
 
     function openApp(id) {

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Master Pro Build</title>
+    <title>NextOS - Browser Fixed</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -37,7 +37,6 @@
         .win.fullscreen { width: 100vw !important; height: calc(100vh - 28px) !important; top: 28px !important; left: 0 !important; border-radius: 0; }
         .win-bar { height: 38px; display: flex; align-items: center; padding: 0 12px; cursor: move; background: rgba(255, 255, 255, 0.05); }
         
-        /* TRAFFIC LIGHTS WITH HOVER */
         .traffic-lights { display: flex; gap: 8px; margin-right: 15px; }
         .tb { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; color: transparent; transition: color 0.1s; font-weight: bold; }
         .win-bar:hover .tb { color: rgba(0,0,0,0.6); }
@@ -45,9 +44,9 @@
         .tb-min { background: #febc2e; } .tb-min::before { content: '−'; }
         .tb-max { background: #28c840; } .tb-max::before { content: '⤢'; }
 
-        /* BROWSER STYLE */
-        .browser-nav { display: flex; align-items: center; padding: 8px; background: #2c2c2e; gap: 10px; }
-        .browser-url { flex: 1; background: #1c1c1e; border: none; border-radius: 6px; padding: 6px 12px; color: white; outline: none; font-size: 13px; }
+        /* BROWSER INTERFACE */
+        .browser-container { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; color: #333; padding: 20px; text-align: center; }
+        .browser-url { width: 80%; max-width: 500px; padding: 12px 20px; border-radius: 24px; border: 1px solid #dfe1e5; font-size: 16px; outline: none; margin-bottom: 20px; box-shadow: 0 1px 6px rgba(32,33,36,0.28); }
 
         /* DOCK */
         #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(30px); border-radius: 20px; z-index: 9999; border: 0.5px solid rgba(255,255,255,0.2); }
@@ -92,19 +91,17 @@
 
     const apps = {
         browser: { 
-            title: 'Safari', w: 900, h: 600, 
+            title: 'Safari', w: 700, h: 450, 
             content: () => `
-                <div class="browser-nav">
-                    <i data-lucide="chevron-left" style="cursor:pointer; width:18px;"></i>
-                    <i data-lucide="chevron-right" style="cursor:pointer; width:18px;"></i>
-                    <input class="browser-url" id="url-bar" value="https://www.bing.com" onkeydown="if(event.key==='Enter') loadUrl(this.value)">
-                    <i data-lucide="rotate-cw" style="cursor:pointer; width:18px;" onclick="loadUrl(document.getElementById('url-bar').value)"></i>
-                </div>
-                <iframe id="browser-frame" src="https://www.bing.com" style="width:100%; height:calc(100% - 45px); border:none; background:white;"></iframe>` 
+                <div class="browser-container">
+                    <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="width:150px; margin-bottom:20px;">
+                    <input class="browser-url" placeholder="Search the web..." onkeydown="if(event.key==='Enter') window.open('https://www.google.com/search?q=' + encodeURIComponent(this.value), '_blank')">
+                    <p style="font-size:12px; color:#666;">Press Enter to search (opens in new tab to bypass security)</p>
+                </div>` 
         },
         calc: { title: 'Calculator', w: 280, h: 420, content: () => `<div id="d" style="padding:20px; font-size:40px; text-align:right; height:70px; background:#111;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.2px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333;">${b}</div>`).join('')}</div>` },
         calendar: { title: 'Calendar', w: 350, h: 400, content: () => `<div id="cal-root"></div>` },
-        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v12.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
+        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v13.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
         weather: { title: 'Weather', w: 300, h: 400, content: () => `<div style="height:100%; background:linear-gradient(#1d3ede, #01befe); padding:40px; text-align:center;"><i data-lucide="sun" style="width:50px; height:50px;"></i><h1>22°C</h1><p>Sunny</p></div>` },
         settings: { title: 'Settings', w: 400, h: 250, content: () => `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` }
     };
@@ -113,12 +110,6 @@
     function lockOS() { lock.classList.remove('unlocked'); closeMenu(); }
     function toggleMenu() { dropdown.classList.toggle('active'); }
     function closeMenu() { dropdown.classList.remove('active'); }
-
-    function loadUrl(val) {
-        let url = val.startsWith('http') ? val : 'https://www.bing.com/search?q=' + encodeURIComponent(val);
-        document.getElementById('browser-frame').src = url;
-        document.getElementById('url-bar').value = url;
-    }
 
     function openApp(id) {
         if (wins[id]) { wins[id].classList.remove('minimized'); wins[id].style.zIndex = ++zIndex; return; }

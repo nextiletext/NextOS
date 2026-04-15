@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Ultra Stable</title>
+    <title>NextOS - Ultra Final Build</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
-            --bg: url('https://cdn.discordapp.com/attachments/1490821953358135490/1493680820463075468/Next_wallapaper.png?ex=69e082ea&is=69df316a&hm=42422dda9b668beae4a13f76e08bd456793c863963bc2d040579e7b49f2cd88c&'); 
+            --bg: url('https://cdn.discordapp.com/attachments/1490821953358135490/1493679242230104235/NextOS_wallpaper.png?ex=69dfd8b2&is=69de8732&hm=5e463232114b4fab3c4d65a07420822a271d5d3a5d1998f8472862886a915221&'); 
             --brightness: 1; 
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-user-select: none; user-select: none; }
@@ -20,19 +20,20 @@
         #lock-time { font-size: 100px; color: white; font-weight: 200; }
         #pass-box { margin-top: 20px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 12px 30px; border-radius: 25px; color: white; text-align: center; outline: none; backdrop-filter: blur(15px); }
 
-        /* MENUBAR (FULLY RESTORED) */
+        /* MENUBAR */
         #menubar { position: absolute; top: 0; width: 100%; height: 28px; background: rgba(20, 20, 25, 0.75); backdrop-filter: blur(30px); display: flex; align-items: center; padding: 0 15px; z-index: 10000; border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white; font-size: 13px; }
         .apple-logo { cursor: pointer; display: flex; align-items: center; padding: 0 10px; margin-left: -10px; height: 100%; position: relative; }
         .dropdown { position: absolute; top: 28px; left: 5px; width: 200px; background: rgba(35, 35, 40, 0.95); backdrop-filter: blur(40px); border-radius: 6px; border: 0.5px solid rgba(255,255,255,0.1); padding: 5px; display: none; }
         .dropdown.active { display: block; }
         .drop-item { padding: 4px 12px; border-radius: 4px; font-size: 13px; color: white; cursor: default; }
         .drop-item:hover { background: #007aff; }
+        .gemini-sparkle { width: 16px; height: 16px; margin-right: 8px; vertical-align: middle; }
         .m-item { margin-left: 15px; opacity: 0.9; cursor: default; }
         .m-bold { font-weight: 700; margin-left: 10px; }
 
         /* WINDOWS & TRAFFIC LIGHTS */
-        .win { position: absolute; border-radius: 12px; overflow: hidden; background: rgba(30, 30, 35, 0.98); backdrop-filter: blur(50px); border: 0.5px solid rgba(255, 255, 255, 0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; transition: transform 0.4s, opacity 0.3s; }
-        .win.minimized { transform: scale(0.1) translateY(800px); opacity: 0; pointer-events: none; }
+        .win { position: absolute; border-radius: 12px; overflow: hidden; background: rgba(30, 30, 35, 0.98); backdrop-filter: blur(50px); border: 0.5px solid rgba(255, 255, 255, 0.2); box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s; }
+        .win.minimized { transform: scale(0) translateY(800px); opacity: 0; pointer-events: none; }
         .win.fullscreen { width: 100vw !important; height: calc(100vh - 28px) !important; top: 28px !important; left: 0 !important; border-radius: 0; }
         .win-bar { height: 38px; display: flex; align-items: center; padding: 0 12px; cursor: move; background: rgba(255, 255, 255, 0.05); }
         
@@ -44,9 +45,9 @@
         .tb-max { background: #28c840; } .tb-max::before { content: '⤢'; }
 
         /* DOCK */
-        #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(30px); border-radius: 20px; z-index: 9999; }
+        #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(30px); border-radius: 20px; z-index: 9999; border: 0.5px solid rgba(255,255,255,0.2); }
         #dock { display: flex; gap: 12px; }
-        .dk { width: 52px; height: 52px; border-radius: 13px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.15); }
+        .dk { width: 52px; height: 52px; border-radius: 13px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.15); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .dk:hover { transform: scale(1.2) translateY(-5px); background: rgba(255,255,255,0.3); }
 
         .win-content { flex: 1; overflow: hidden; background: #1c1c1e; color: white; }
@@ -63,18 +64,19 @@
                 <div class="drop-item" onclick="lockOS()">Lock Screen</div>
             </div>
         </div>
+        <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef629dc620163.svg" class="gemini-sparkle">
         <span class="m-bold" id="active-app-name">Finder</span>
         <span class="m-item">File</span><span class="m-item">Edit</span><span class="m-item">View</span><span class="m-item">Go</span><span class="m-item">Window</span><span class="m-item">Help</span>
         <span id="clock" style="margin-left:auto; font-weight:500;">00:00</span>
     </div>
 
     <div id="dock-container"><div id="dock">
-        <div class="dk" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
-        <div class="dk" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
-        <div class="dk" onclick="openApp('calendar')"><i data-lucide="calendar"></i></div>
-        <div class="dk" onclick="openApp('terminal')"><i data-lucide="terminal"></i></div>
-        <div class="dk" onclick="openApp('weather')"><i data-lucide="cloud-sun"></i></div>
-        <div class="dk" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
+        <div class="dk" title="Safari" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
+        <div class="dk" title="Calculator" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
+        <div class="dk" title="Calendar" onclick="openApp('calendar')"><i data-lucide="calendar"></i></div>
+        <div class="dk" title="Terminal" onclick="openApp('terminal')"><i data-lucide="terminal"></i></div>
+        <div class="dk" title="Weather" onclick="openApp('weather')"><i data-lucide="cloud-sun"></i></div>
+        <div class="dk" title="Settings" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
     </div></div>
 </div>
 
@@ -84,10 +86,10 @@
     const today = new Date();
 
     const apps = {
-        browser: { title: 'Safari', w: 800, h: 500, content: () => `<iframe src="https://www.bing.com" style="width:100%; height:100%; border:none; background:white;"></iframe>` },
+        browser: { title: 'Safari', w: 850, h: 550, content: () => `<iframe src="https://www.bing.com" style="width:100%; height:100%; border:none; background:white;"></iframe>` },
         calc: { title: 'Calculator', w: 280, h: 420, content: () => `<div id="d" style="padding:20px; font-size:40px; text-align:right; height:70px; background:#111;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.2px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333;">${b}</div>`).join('')}</div>` },
         calendar: { title: 'Calendar', w: 350, h: 400, content: () => `<div id="cal-root"></div>` },
-        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v10.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
+        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v11.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
         weather: { title: 'Weather', w: 300, h: 400, content: () => `<div style="height:100%; background:linear-gradient(#1d3ede, #01befe); padding:40px; text-align:center;"><i data-lucide="sun" style="width:50px; height:50px;"></i><h1>22°C</h1><p>Sunny</p></div>` },
         settings: { title: 'Settings', w: 400, h: 250, content: () => `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` }
     };

@@ -2,141 +2,116 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Secure Edition</title>
+    <title>NextOS - Ultra Stable</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
             --bg: url('https://cdn.discordapp.com/attachments/1490821953358135490/1493679242230104235/NextOS_wallpaper.png?ex=69dfd8b2&is=69de8732&hm=5e463232114b4fab3c4d65a07420822a271d5d3a5d1998f8472862886a915221&'); 
             --brightness: 1; 
         }
-        
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-user-select: none; user-select: none; }
         body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; }
-        
-        #os { 
-            width: 100%; height: 100%; position: relative; 
-            background: #0d1f3c var(--bg) no-repeat center center; 
-            background-size: cover; filter: brightness(var(--brightness));
-            display: none; /* Hidden until unlocked */
-        }
+        #os { width: 100%; height: 100%; position: relative; background: #0d1f3c var(--bg) no-repeat center center; background-size: cover; filter: brightness(var(--brightness)); display: none; }
 
         /* LOCK SCREEN */
-        #lock-screen {
-            position: fixed; inset: 0; z-index: 20000;
-            background: var(--bg) no-repeat center center; background-size: cover;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            backdrop-filter: blur(20px); transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        #lock-screen { position: fixed; inset: 0; z-index: 20000; background: var(--bg) no-repeat center center; background-size: cover; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.6s ease-in-out; }
         #lock-screen.unlocked { transform: translateY(-100%); }
-        #lock-content { text-align: center; color: white; transition: 0.3s; }
-        #lock-time { font-size: 80px; font-weight: 200; margin-bottom: 10px; }
-        #lock-date { font-size: 20px; font-weight: 400; margin-bottom: 40px; opacity: 0.8; }
-        #pass-box { background: rgba(255,255,255,0.2); border: none; padding: 10px 20px; border-radius: 20px; color: white; outline: none; text-align: center; backdrop-filter: blur(10px); width: 200px; font-size: 14px; }
-        #pass-box::placeholder { color: rgba(255,255,255,0.6); }
+        .lock-blur { position: absolute; inset: 0; backdrop-filter: blur(25px); background: rgba(0,0,0,0.2); z-index: -1; }
+        #lock-time { font-size: 90px; color: white; font-weight: 200; }
+        #pass-box { margin-top: 20px; background: rgba(255,255,255,0.2); border: none; padding: 12px 25px; border-radius: 20px; color: white; text-align: center; outline: none; backdrop-filter: blur(10px); }
 
-        /* RE-INSTATING CORE UI */
-        #menubar {
-            position: absolute; top: 0; width: 100%; height: 28px;
-            background: rgba(20, 20, 25, 0.7); backdrop-filter: blur(30px);
-            display: flex; align-items: center; padding: 0 15px; z-index: 10000;
-            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white; font-size: 13px;
-        }
+        /* MENUBAR */
+        #menubar { position: absolute; top: 0; width: 100%; height: 28px; background: rgba(20, 20, 25, 0.7); backdrop-filter: blur(30px); display: flex; align-items: center; padding: 0 15px; z-index: 10000; border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white; font-size: 13px; }
         .m-item { margin-right: 15px; cursor: default; }
         .m-bold { font-weight: 700; margin-right: 20px; }
 
-        .win {
-            position: absolute; border-radius: 12px; overflow: hidden;
-            background: rgba(30, 30, 35, 0.98); backdrop-filter: blur(50px);
-            border: 0.5px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column;
-        }
+        /* WINDOWS */
+        .win { position: absolute; border-radius: 12px; overflow: hidden; background: rgba(30, 30, 35, 0.98); backdrop-filter: blur(50px); border: 0.5px solid rgba(255, 255, 255, 0.15); box-shadow: 0 40px 80px rgba(0,0,0,0.6); display: flex; flex-direction: column; transition: transform 0.3s, opacity 0.3s; }
         .win.fullscreen { width: 100vw !important; height: calc(100vh - 28px) !important; top: 28px !important; left: 0 !important; border-radius: 0; }
+        .win-bar { height: 38px; display: flex; align-items: center; padding: 0 12px; cursor: move; background: rgba(255, 255, 255, 0.05); }
         .traffic-lights { display: flex; gap: 8px; margin-right: 15px; }
-        .tb { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; }
+        .tb { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; color: transparent; }
+        .win-bar:hover .tb { color: rgba(0,0,0,0.5); }
         .tb-close { background: #ff5f57; } .tb-min { background: #febc2e; } .tb-max { background: #28c840; }
+        .win-content { flex: 1; overflow: hidden; color: white; background: #1c1c1e; position: relative; }
 
-        #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(30px); border-radius: 20px; z-index: 9999; }
+        /* DOCK */
+        #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(30px); border-radius: 20px; z-index: 9999; border: 0.5px solid rgba(255,255,255,0.2); }
         #dock { display: flex; gap: 12px; align-items: center; }
-        .dk { width: 52px; height: 52px; border-radius: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.15); }
+        .dk { width: 52px; height: 52px; border-radius: 13px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.15); }
+        .dk:hover { transform: scale(1.2) translateY(-5px); background: rgba(255,255,255,0.3); }
+
+        /* APP SPECIFIC */
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); height: calc(100% - 70px); }
+        .calc-btn { border: 0.5px solid #2c2c2e; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; background: #333; }
+        .cal-nav { display: flex; justify-content: space-between; padding: 10px; background: #2c2c2e; }
     </style>
 </head>
 <body>
 
-<div id="lock-screen">
-    <div id="lock-content">
-        <div id="lock-time">--:--</div>
-        <div id="lock-date">Wednesday, April 15</div>
-        <input type="password" id="pass-box" placeholder="Enter Password" onkeydown="if(event.key==='Enter') unlock()">
-    </div>
-</div>
+<div id="lock-screen"><div class="lock-blur"></div><div id="lock-time">00:00</div><input type="password" id="pass-box" placeholder="Press Enter to Unlock" onkeydown="if(event.key==='Enter') unlock()"></div>
 
 <div id="os">
     <div id="menubar">
         <i data-lucide="apple" style="width:14px; margin-right:15px;"></i>
         <span class="m-bold" id="active-app-name">Finder</span>
         <span class="m-item">File</span><span class="m-item">Edit</span><span class="m-item">View</span><span class="m-item">Go</span><span class="m-item">Window</span><span class="m-item">Help</span>
-        <span id="clock" style="margin-left:auto; font-weight: 500;">--:--</span>
+        <span id="clock" style="margin-left:auto;">00:00</span>
     </div>
-
-    <div id="dock-container">
-        <div id="dock">
-            <div class="dk" title="Safari" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
-            <div class="dk" title="Calculator" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
-            <div class="dk" title="Calendar" onclick="openApp('calendar')"><i data-lucide="calendar"></i></div>
-            <div class="dk" title="Terminal" onclick="openApp('terminal')"><i data-lucide="terminal"></i></div>
-            <div class="dk" title="Weather" onclick="openApp('weather')"><i data-lucide="cloud-sun"></i></div>
-            <div class="dk" title="Settings" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
-        </div>
-    </div>
+    <div id="dock-container"><div id="dock">
+        <div class="dk" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
+        <div class="dk" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
+        <div class="dk" onclick="openApp('calendar')"><i data-lucide="calendar"></i></div>
+        <div class="dk" onclick="openApp('terminal')"><i data-lucide="terminal"></i></div>
+        <div class="dk" onclick="openApp('weather')"><i data-lucide="cloud-sun"></i></div>
+        <div class="dk" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
+    </div></div>
 </div>
 
 <script>
-    const os = document.getElementById('os');
-    const lock = document.getElementById('lock-screen');
-    let zIndex = 1000;
-    const wins = {};
+    const os = document.getElementById('os'), lock = document.getElementById('lock-screen');
+    let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
 
-    function unlock() {
-        // Just press enter to unlock for now
-        lock.classList.add('unlocked');
-        os.style.display = 'block';
-        setTimeout(() => lock.style.display = 'none', 800);
-    }
+    const apps = {
+        browser: { title: 'Safari', w: 800, h: 500, content: () => `<iframe src="https://www.bing.com" style="width:100%; height:100%; border:none; background:white;"></iframe>` },
+        calc: { title: 'Calculator', w: 280, h: 420, content: () => `<div id="d" style="padding:20px; font-size:40px; text-align:right; height:70px;">0</div><div class="calc-grid">${["C","±","%","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","="].map(b=>`<div class="calc-btn" onclick="hC('${b}')">${b}</div>`).join('')}</div>` },
+        calendar: { title: 'Calendar', w: 350, h: 400, content: () => `<div id="cal-root"></div>` },
+        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v5.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
+        weather: { title: 'Weather', w: 300, h: 400, content: () => `<div style="height:100%; background:linear-gradient(#1d3ede, #01befe); padding:40px; text-align:center;"><i data-lucide="sun" style="width:50px; height:50px;"></i><h1>22°C</h1><p>Sunny</p></div>` },
+        settings: { title: 'Settings', w: 400, h: 250, content: () => `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` }
+    };
+
+    function unlock() { lock.classList.add('unlocked'); os.style.display = 'block'; setTimeout(() => lock.style.display = 'none', 600); }
 
     function openApp(id) {
-        if (wins[id]) return;
-        const w = document.createElement('div');
-        w.className = 'win'; w.id = 'win-' + id;
-        w.style.width = '400px'; w.style.height = '300px';
+        if (wins[id]) { wins[id].style.zIndex = ++zIndex; return; }
+        const a = apps[id], w = document.createElement('div');
+        w.className = 'win'; w.id = 'win-'+id; w.style.width = a.w+'px'; w.style.height = a.h+'px';
         w.style.left = '100px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
-        w.innerHTML = `
-            <div style="height:38px; display:flex; align-items:center; padding:0 12px; background:rgba(255,255,255,0.05);">
-                <div class="traffic-lights">
-                    <button class="tb tb-close" onclick="closeApp('${id}')"></button>
-                    <button class="tb tb-min"></button>
-                    <button class="tb tb-max" onclick="this.closest('.win').classList.toggle('fullscreen')"></button>
-                </div>
-                <span style="margin:auto;font-size:12px;color:white;">${id.toUpperCase()}</span>
-            </div>
-            <div style="flex:1; background:#1c1c1e; padding:20px; color:white;" id="content-${id}"></div>`;
+        w.innerHTML = `<div class="win-bar" onmousedown="sD(event,'${id}')"><div class="traffic-lights"><div class="tb tb-close" onclick="cA('${id}')"></div><div class="tb tb-min"></div><div class="tb tb-max" onclick="tF('${id}')"></div></div><span style="margin:auto; font-size:12px;">${a.title}</span></div><div class="win-content">${a.content()}</div>`;
         os.appendChild(w); wins[id] = w;
-        if(id === 'settings') {
-            document.getElementById(`content-${id}`).innerHTML = `<h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;">`;
-        }
+        if(id === 'calendar') rC();
+        lucide.createIcons();
     }
 
-    function closeApp(id) { os.removeChild(wins[id]); delete wins[id]; }
-
-    function updateTime() {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        document.getElementById('clock').innerText = timeStr;
-        document.getElementById('lock-time').innerText = timeStr;
+    function rC() {
+        const root = document.getElementById('cal-root');
+        root.innerHTML = `<div class="cal-nav"><button onclick="cD(-1)"><i data-lucide="chevron-left"></i></button><span>${viewDate.toLocaleString('default',{month:'long'})} ${viewDate.getFullYear()}</span><button onclick="cD(1)"><i data-lucide="chevron-right"></i></button></div><div style="display:grid; grid-template-columns:repeat(7,1fr); padding:10px; text-align:center;">${Array.from({length:31},(_,i)=>`<div style="padding:5px; ${i===14?'background:#007aff; border-radius:5px;':''}">${i+1}</div>`).join('')}</div>`;
+        lucide.createIcons();
     }
 
-    setInterval(updateTime, 1000);
-    updateTime();
-    lucide.createIcons();
+    window.cD = (d) => { viewDate.setMonth(viewDate.getMonth()+d); rC(); };
+    window.hC = (b) => { const d = document.getElementById('d'); if(b==="C") calcVal=""; else if(b==="=") {try{calcVal=eval(calcVal).toString()}catch{calcVal="Error"}} else calcVal+=b; d.innerText = calcVal||"0"; };
+    window.tF = (id) => wins[id].classList.toggle('fullscreen');
+    window.cA = (id) => { os.removeChild(wins[id]); delete wins[id]; };
+
+    let dW = null, oX, oY;
+    function sD(e, id) { if(wins[id].classList.contains('fullscreen')) return; dW = wins[id]; dW.style.zIndex = ++zIndex; oX = e.clientX - dW.offsetLeft; oY = e.clientY - dW.offsetTop; }
+    document.onmousemove = (e) => { if(dW) { dW.style.left = (e.clientX-oX)+'px'; dW.style.top = (e.clientY-oY)+'px'; } };
+    document.onmouseup = () => dW = null;
+
+    setInterval(() => { const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); document.getElementById('clock').innerText = t; document.getElementById('lock-time').innerText = t; }, 1000);
+    window.onload = () => lucide.createIcons();
 </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Browser Fixed</title>
+    <title>NextOS - Pro 12h Build</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -44,7 +44,7 @@
         .tb-min { background: #febc2e; } .tb-min::before { content: '−'; }
         .tb-max { background: #28c840; } .tb-max::before { content: '⤢'; }
 
-        /* BROWSER INTERFACE */
+        /* APPS */
         .browser-container { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; color: #333; padding: 20px; text-align: center; }
         .browser-url { width: 80%; max-width: 500px; padding: 12px 20px; border-radius: 24px; border: 1px solid #dfe1e5; font-size: 16px; outline: none; margin-bottom: 20px; box-shadow: 0 1px 6px rgba(32,33,36,0.28); }
 
@@ -59,7 +59,7 @@
 </head>
 <body onclick="closeMenu()">
 
-<div id="lock-screen"><div class="lock-blur"></div><div id="lock-time">00:00</div><input type="password" id="pass-box" placeholder="Enter Password" onkeydown="if(event.key==='Enter') unlock()"></div>
+<div id="lock-screen"><div class="lock-blur"></div><div id="lock-time">00:00 AM</div><input type="password" id="pass-box" placeholder="Enter Password" onkeydown="if(event.key==='Enter') unlock()"></div>
 
 <div id="os">
     <div id="menubar">
@@ -71,7 +71,10 @@
         <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef629dc620163.svg" class="gemini-sparkle">
         <span class="m-bold" id="active-app-name">Finder</span>
         <span class="m-item">File</span><span class="m-item">Edit</span><span class="m-item">View</span><span class="m-item">Go</span><span class="m-item">Window</span><span class="m-item">Help</span>
-        <span id="clock" style="margin-left:auto; font-weight:500;">00:00</span>
+        <span id="clock-container" style="margin-left:auto; font-weight:500;">
+            <span id="menubar-date" style="margin-right:10px;"></span>
+            <span id="clock">00:00 AM</span>
+        </span>
     </div>
 
     <div id="dock-container"><div id="dock">
@@ -96,12 +99,12 @@
                 <div class="browser-container">
                     <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="width:150px; margin-bottom:20px;">
                     <input class="browser-url" placeholder="Search the web..." onkeydown="if(event.key==='Enter') window.open('https://www.google.com/search?q=' + encodeURIComponent(this.value), '_blank')">
-                    <p style="font-size:12px; color:#666;">Press Enter to search (opens in new tab to bypass security)</p>
+                    <p style="font-size:12px; color:#666;">Press Enter to search (New Tab)</p>
                 </div>` 
         },
         calc: { title: 'Calculator', w: 280, h: 420, content: () => `<div id="d" style="padding:20px; font-size:40px; text-align:right; height:70px; background:#111;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.2px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333;">${b}</div>`).join('')}</div>` },
         calendar: { title: 'Calendar', w: 350, h: 400, content: () => `<div id="cal-root"></div>` },
-        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v13.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
+        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v14.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
         weather: { title: 'Weather', w: 300, h: 400, content: () => `<div style="height:100%; background:linear-gradient(#1d3ede, #01befe); padding:40px; text-align:center;"><i data-lucide="sun" style="width:50px; height:50px;"></i><h1>22°C</h1><p>Sunny</p></div>` },
         settings: { title: 'Settings', w: 400, h: 250, content: () => `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` }
     };
@@ -148,7 +151,18 @@
     document.onmousemove = (e) => { if(dW) { dW.style.left = (e.clientX-oX)+'px'; dW.style.top = (e.clientY-oY)+'px'; } };
     document.onmouseup = () => dW = null;
 
-    setInterval(() => { const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); document.getElementById('clock').innerText = t; document.getElementById('lock-time').innerText = t; }, 1000);
+    setInterval(() => { 
+        const now = new Date();
+        const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+        const dateOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+        const tStr = now.toLocaleTimeString([], timeOptions);
+        const dStr = now.toLocaleDateString([], dateOptions);
+        
+        document.getElementById('clock').innerText = tStr;
+        document.getElementById('lock-time').innerText = tStr;
+        document.getElementById('menubar-date').innerText = dStr;
+    }, 1000);
+    
     window.onload = () => lucide.createIcons();
 </script>
 </body>

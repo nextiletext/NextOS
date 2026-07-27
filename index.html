@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Wallpaper Themes Build</title>
+    <title>NextOS - Fixed Wallpaper Settings</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -11,7 +11,7 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-user-select: none; user-select: none; }
         body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; }
-        #os { width: 100%; height: 100%; position: relative; background: #0d1f3c var(--bg) center/cover transition: background 0.3s ease; filter: brightness(var(--brightness)); display: none; }
+        #os { width: 100%; height: 100%; position: relative; background: #0d1f3c var(--bg) center/cover; transition: background 0.3s ease; filter: brightness(var(--brightness)); display: none; }
 
         /* LOCK SCREEN */
         #lock-screen { position: fixed; inset: 0; z-index: 20000; background: var(--bg) center/cover; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -207,7 +207,7 @@
                     
                     <h3 style="margin-bottom:8px; font-size:15px;">Wallpaper Themes</h3>
                     <div class="theme-grid">
-                        ${themes.map(t => `<div class="theme-card" style="background-image:url('${t.url}');" onclick="setTheme('${t.url}')"><span>${t.name}</span></div>`).join('')}
+                        ${themes.map((t, index) => `<div class="theme-card" style="background-image:url('${t.url}');" onclick="setThemeByIndex(${index})"><span>${t.name}</span></div>`).join('')}
                     </div>
 
                     <div style="margin-top:15px;">
@@ -221,6 +221,12 @@
         },
         help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Change desktop wallpapers and brightness inside Settings.<br>- Use traffic lights to close, minimize, or maximize apps.<br>- Use Gemini sparkle for quick AI assistance.</p></div>` }
     };
+
+    function setThemeByIndex(idx) {
+        if (themes[idx]) {
+            setTheme(themes[idx].url);
+        }
+    }
 
     function setTheme(url) {
         if (!url || !url.trim()) return;

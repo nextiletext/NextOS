@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - nextile</title>
+    <title>NextOS - Ultra High-FPS Build</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -96,7 +96,7 @@
         .browser-nav { display: flex; align-items: center; padding: 8px; background: #2c2c2e; gap: 12px; }
         .browser-url { flex: 1; background: #1c1c1e; border: none; border-radius: 6px; padding: 6px 12px; color: white; outline: none; font-size: 13px; }
 
-        /* DOCK (More Transparent Glass Style) */
+        /* DOCK */
         #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.12); border-radius: 20px; z-index: 9999; border: 0.5px solid rgba(255, 255, 255, 0.25); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
         #dock { display: flex; gap: 12px; }
         .dk { width: 52px; height: 52px; border-radius: 13px; cursor: pointer; transition: transform 0.1s ease, background 0.15s ease; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.18); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
@@ -204,6 +204,7 @@
         <div class="dk" title="Terminal" onclick="openApp('terminal')"><i data-lucide="terminal"></i></div>
         <div class="dk" title="Weather" onclick="openApp('weather')"><i data-lucide="cloud-sun"></i></div>
         <div class="dk" title="Settings" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
+        <div class="dk" title="My Page" onclick="openApp('myPage')"><i data-lucide="link"></i></div>
     </div></div>
 </div>
 
@@ -255,6 +256,10 @@
     ];
 
     const apps = {
+        myPage: {
+            title: 'My Page',
+            action: () => window.open('https://guns.lol/nextile', '_blank')
+        },
         browser: { 
             title: 'Safari', w: 900, h: 600, 
             content: () => `
@@ -372,8 +377,16 @@
 
     function openApp(id) {
         closeAllMenus();
+        const a = apps[id];
+        if (!a) return;
+
+        if (a.action) {
+            a.action();
+            return;
+        }
+
         if (wins[id]) { wins[id].classList.remove('minimized'); wins[id].style.zIndex = ++zIndex; return; }
-        const a = apps[id], w = document.createElement('div');
+        const w = document.createElement('div');
         w.className = 'win'; w.id = 'win-'+id; w.style.width = a.w+'px'; w.style.height = a.h+'px';
         w.style.left = '100px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
         w.innerHTML = `<div class="win-bar" onmousedown="sD(event,'${id}')"><div class="traffic-lights"><button class="tb tb-close" onclick="cA('${id}')"></button><button class="tb tb-min" onclick="minA('${id}')"></button><button class="tb tb-max" onclick="tF('${id}')"></button></div><span style="margin:auto; font-size:12px; font-weight:600;">${a.title}</span></div><div class="win-content">${a.content()}</div>`;

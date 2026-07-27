@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - macOS Startup Sound Build</title>
+    <title>NextOS - No Password Prompt Build</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -71,7 +71,11 @@
 </head>
 <body onclick="closeAllMenus()">
 
-<div id="lock-screen"><div class="lock-blur"></div><div id="lock-time">00:00 AM</div><input type="password" id="pass-box" placeholder="Enter Password" onkeydown="if(event.key==='Enter') unlock()"></div>
+<div id="lock-screen">
+    <div class="lock-blur"></div>
+    <div id="lock-time">00:00 AM</div>
+    <input type="password" id="pass-box" name="lockscreen-pin" autocomplete="off" placeholder="Enter Password" onkeydown="if(event.key==='Enter') unlock()">
+</div>
 
 <div id="os">
     <div id="menubar">

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - nextile</title>
+    <title>NextOS - project</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -384,8 +384,23 @@
         const ctx = canvas.getContext('2d');
         
         const rect = canvas.getBoundingClientRect();
+        
+        // Backup existing drawing before resolution change wipes it
+        let tempCanvas = null;
+        if (canvas.width > 0 && canvas.height > 0) {
+            tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+        }
+
         canvas.width = rect.width;
         canvas.height = rect.height;
+
+        // Restore backup drawing
+        if (tempCanvas) {
+            ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.width, canvas.height);
+        }
 
         let painting = false;
 
@@ -422,10 +437,10 @@
             ctx.moveTo(x, y);
         }
 
-        canvas.addEventListener('mousedown', startPosition);
-        canvas.addEventListener('mouseup', finishedPosition);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseleave', finishedPosition);
+        canvas.onmousedown = startPosition;
+        canvas.onmouseup = finishedPosition;
+        canvas.onmousemove = draw;
+        canvas.onmouseleave = finishedPosition;
     }
 
     function clearCanvas() {
@@ -550,10 +565,8 @@
         if (!w) return;
         const isFullscreen = w.classList.toggle('fullscreen');
         
-        // Reset translate offset
         w.style.transform = 'translate3d(0,0,0)';
         
-        // Ensure window stays inside visible screen boundaries
         if (!isFullscreen) {
             let l = parseInt(w.style.left) || 100;
             let t = parseInt(w.style.top) || 100;
@@ -567,7 +580,9 @@
             w.style.top = t + 'px';
         }
 
-        if (id === 'paint') setTimeout(initPaint, 100);
+        if (id === 'paint') {
+            setTimeout(initPaint, 50);
+        }
     };
 
     window.minA = (id) => wins[id].classList.add('minimized');

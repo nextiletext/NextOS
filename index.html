@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - project</title>
+    <title>NextOS - nextile</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -546,7 +546,27 @@
     window.hC = (b) => { const d = document.getElementById('d'); if(b==="C") calcVal=""; else if(b==="=") {try{calcVal=eval(calcVal).toString()}catch{calcVal="Error"}} else calcVal+=b; d.innerText = calcVal||"0"; };
     
     window.tF = (id) => {
-        wins[id].classList.toggle('fullscreen');
+        const w = wins[id];
+        if (!w) return;
+        const isFullscreen = w.classList.toggle('fullscreen');
+        
+        // Reset translate offset
+        w.style.transform = 'translate3d(0,0,0)';
+        
+        // Ensure window stays inside visible screen boundaries
+        if (!isFullscreen) {
+            let l = parseInt(w.style.left) || 100;
+            let t = parseInt(w.style.top) || 100;
+            
+            if (l < 10) l = 50;
+            if (t < 35) t = 50;
+            if (l > window.innerWidth - 100) l = window.innerWidth - 300;
+            if (t > window.innerHeight - 100) t = window.innerHeight - 300;
+            
+            w.style.left = l + 'px';
+            w.style.top = t + 'px';
+        }
+
         if (id === 'paint') setTimeout(initPaint, 100);
     };
 

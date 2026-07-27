@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Ultra Smooth Build</title>
+    <title>NextOS - Ultra High-FPS Build</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -11,17 +11,17 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-user-select: none; user-select: none; }
         body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; }
-        #os { width: 100%; height: 100%; position: relative; background: #0d1f3c var(--bg) center/cover; transition: background 0.3s ease; filter: brightness(var(--brightness)); display: none; }
+        #os { width: 100%; height: 100%; position: relative; background: #0d1f3c var(--bg) center/cover; transition: background 0.2s ease; filter: brightness(var(--brightness)); display: none; }
 
-        /* PERFORMANCE: Disable iframe interaction during dragging to eliminate lag */
+        /* Disable iframe events while dragging to prevent frame drops */
         body.dragging iframe {
             pointer-events: none !important;
         }
 
         /* LOCK SCREEN */
-        #lock-screen { position: fixed; inset: 0; z-index: 20000; background: var(--bg) center/cover; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        #lock-screen { position: fixed; inset: 0; z-index: 20000; background: var(--bg) center/cover; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.3s ease-out; }
         #lock-screen.unlocked { transform: translateY(-100%); }
-        .lock-blur { position: absolute; inset: 0; backdrop-filter: blur(20px); background: rgba(0,0,0,0.3); z-index: -1; }
+        .lock-blur { position: absolute; inset: 0; background: rgba(0,0,0,0.55); z-index: -1; }
         #lock-time { font-size: 100px; color: white; font-weight: 200; }
         
         #pass-box { 
@@ -33,7 +33,6 @@
             color: white; 
             text-align: center; 
             outline: none; 
-            backdrop-filter: blur(15px); 
             min-width: 220px;
             cursor: text;
             -webkit-user-select: text;
@@ -50,10 +49,10 @@
         }
 
         /* MENUBAR */
-        #menubar { position: absolute; top: 0; width: 100%; height: 28px; background: rgba(20, 20, 25, 0.85); backdrop-filter: blur(20px); display: flex; align-items: center; padding: 0 15px; z-index: 10000; border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white; font-size: 13px; }
+        #menubar { position: absolute; top: 0; width: 100%; height: 28px; background: rgba(20, 20, 25, 0.92); display: flex; align-items: center; padding: 0 15px; z-index: 10000; border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white; font-size: 13px; }
         .apple-logo { cursor: pointer; display: flex; align-items: center; padding: 0 10px; margin-left: -10px; height: 100%; position: relative; }
         
-        .dropdown { position: absolute; top: 28px; left: 0; width: 180px; background: rgba(35, 35, 40, 0.95); backdrop-filter: blur(20px); border-radius: 6px; border: 0.5px solid rgba(255,255,255,0.1); padding: 5px; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10001; }
+        .dropdown { position: absolute; top: 28px; left: 0; width: 180px; background: rgba(35, 35, 40, 0.98); border-radius: 6px; border: 0.5px solid rgba(255,255,255,0.1); padding: 5px; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10001; }
         .dropdown.active { display: block; }
         .drop-item { padding: 5px 12px; border-radius: 4px; font-size: 13px; color: white; cursor: pointer; }
         .drop-item:hover { background: #007aff; }
@@ -67,27 +66,27 @@
         .m-item:hover { background: rgba(255,255,255,0.15); opacity: 1; }
         .m-bold { font-weight: 700; margin-left: 10px; }
 
-        /* WINDOWS (GPU Acceleration + Fast Transitions) */
+        /* WINDOWS (GPU Acceleration & Rendering Isolation) */
         .win { 
             position: absolute; 
             border-radius: 12px; 
             overflow: hidden; 
-            background: rgba(30, 30, 35, 0.95); 
-            backdrop-filter: blur(20px); 
+            background: rgba(26, 26, 30, 0.98); 
             border: 0.5px solid rgba(255, 255, 255, 0.2); 
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
             display: flex; 
             flex-direction: column; 
-            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s; 
-            will-change: transform, left, top;
-            transform: translateZ(0);
+            transition: opacity 0.15s ease-out; 
+            contain: layout paint;
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
         }
-        .win.minimized { transform: scale(0) translateY(800px); opacity: 0; pointer-events: none; }
-        .win.fullscreen { width: 100vw !important; height: calc(100vh - 28px) !important; top: 28px !important; left: 0 !important; border-radius: 0; }
+        .win.minimized { transform: scale(0) translateY(800px) !important; opacity: 0; pointer-events: none; }
+        .win.fullscreen { width: 100vw !important; height: calc(100vh - 28px) !important; top: 28px !important; left: 0 !important; transform: translate3d(0,0,0) !important; border-radius: 0; }
         .win-bar { height: 38px; display: flex; align-items: center; padding: 0 12px; cursor: move; background: rgba(255, 255, 255, 0.05); }
         
         .traffic-lights { display: flex; gap: 8px; margin-right: 15px; }
-        .tb { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; color: transparent; transition: color 0.1s; font-weight: bold; }
+        .tb { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; color: transparent; font-weight: bold; }
         .win-bar:hover .tb { color: rgba(0,0,0,0.6); }
         .tb-close { background: #ff5f57; } .tb-close::before { content: '×'; }
         .tb-min { background: #febc2e; } .tb-min::before { content: '−'; }
@@ -98,17 +97,17 @@
         .browser-url { flex: 1; background: #1c1c1e; border: none; border-radius: 6px; padding: 6px 12px; color: white; outline: none; font-size: 13px; }
 
         /* DOCK */
-        #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(20px); border-radius: 20px; z-index: 9999; border: 0.5px solid rgba(255,255,255,0.2); }
+        #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(35, 35, 40, 0.85); border-radius: 20px; z-index: 9999; border: 0.5px solid rgba(255,255,255,0.2); }
         #dock { display: flex; gap: 12px; }
-        .dk { width: 52px; height: 52px; border-radius: 13px; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.15); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .dk { width: 52px; height: 52px; border-radius: 13px; cursor: pointer; transition: transform 0.1s ease; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.15); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .dk:hover { transform: scale(1.15) translateY(-4px); background: rgba(255,255,255,0.3); }
 
-        .win-content { flex: 1; overflow-y: auto; background: #1c1c1e; color: white; }
+        .win-content { flex: 1; overflow-y: auto; background: #1c1c1e; color: white; contain: strict; }
 
         /* SETTINGS STYLES */
         .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-        .theme-card { height: 60px; border-radius: 8px; background-size: cover; background-position: center; border: 2px solid transparent; cursor: pointer; display: flex; align-items: flex-end; padding: 5px; font-size: 11px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.8); transition: border-color 0.2s, transform 0.2s; }
-        .theme-card:hover { transform: scale(1.02); border-color: #007aff; }
+        .theme-card { height: 60px; border-radius: 8px; background-size: cover; background-position: center; border: 2px solid transparent; cursor: pointer; display: flex; align-items: flex-end; padding: 5px; font-size: 11px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        .theme-card:hover { border-color: #007aff; }
     </style>
 </head>
 <body onclick="closeAllMenus()">
@@ -374,26 +373,43 @@
     window.minA = (id) => wins[id].classList.add('minimized');
     window.cA = (id) => { os.removeChild(wins[id]); delete wins[id]; };
 
-    /* OPTIMIZED WINDOW DRAGGING */
-    let dW = null, oX, oY;
+    /* HIGH FPS DRAGGING LOGIC (requestAnimationFrame) */
+    let dW = null, oX, oY, mouseX = 0, mouseY = 0, ticking = false;
+
     function sD(e, id) { 
         if(wins[id].classList.contains('fullscreen')) return; 
         dW = wins[id]; 
-        document.body.classList.add('dragging'); // Disables iframe pointer events for super smooth dragging
+        document.body.classList.add('dragging');
         dW.style.zIndex = ++zIndex; 
         oX = e.clientX - dW.offsetLeft; 
         oY = e.clientY - dW.offsetTop; 
         document.getElementById('active-app-name').innerText = apps[id].title; 
     }
-    
+
     document.onmousemove = (e) => { 
         if(dW) { 
-            dW.style.left = (e.clientX-oX)+'px'; 
-            dW.style.top = (e.clientY-oY)+'px'; 
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            if (!ticking) {
+                requestAnimationFrame(updateWindowPosition);
+                ticking = true;
+            }
         } 
     };
-    
+
+    function updateWindowPosition() {
+        if (dW) {
+            dW.style.transform = `translate3d(${mouseX - oX - dW.offsetLeft}px, ${mouseY - oY - dW.offsetTop}px, 0)`;
+        }
+        ticking = false;
+    }
+
     document.onmouseup = () => {
+        if (dW) {
+            dW.style.left = (mouseX - oX) + 'px';
+            dW.style.top = (mouseY - oY) + 'px';
+            dW.style.transform = 'translate3d(0,0,0)';
+        }
         dW = null;
         document.body.classList.remove('dragging');
     };

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - nextile</title>
+    <title>NextOS - Ultra High-FPS Build</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -146,7 +146,7 @@
             </div>
         </div>
 
-        <div class="gemini-btn" title="Open Gemini AI" onclick="openApp('gemini')">
+        <div class="gemini-btn" title="Open Nextile AI" onclick="openApp('gemini')">
             <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef629dc620163.svg" class="gemini-sparkle">
         </div>
 
@@ -339,18 +339,18 @@
                 </div>`
         },
         gemini: {
-            title: 'Gemini Assistant', w: 400, h: 500,
+            title: 'Nextile AI', w: 400, h: 500,
             content: () => `
                 <div style="display:flex; flex-direction:column; height:100%; padding:15px; background:#1e1e24;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
                         <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef629dc620163.svg" style="width:20px;">
-                        <h4 style="color:#fff;">Gemini AI</h4>
+                        <h4 style="color:#fff;">Nextile AI</h4>
                     </div>
                     <div id="gemini-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px;">
-                        Hello! How can I assist you in NextOS today?
+                        Hello! I am Nextile AI. How can I assist you in NextOS today?
                     </div>
                     <div style="display:flex; gap:5px;">
-                        <input id="gemini-in" placeholder="Ask Gemini..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendGeminiMsg()">
+                        <input id="gemini-in" placeholder="Ask Nextile AI..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendGeminiMsg()">
                         <button onclick="sendGeminiMsg()" style="padding:8px 12px; background:#007aff; border:none; border-radius:6px; color:white; cursor:pointer;">Send</button>
                     </div>
                 </div>`
@@ -385,7 +385,6 @@
         
         const rect = canvas.getBoundingClientRect();
         
-        // Backup existing drawing before resolution change wipes it
         let tempCanvas = null;
         if (canvas.width > 0 && canvas.height > 0) {
             tempCanvas = document.createElement('canvas');
@@ -397,7 +396,6 @@
         canvas.width = rect.width;
         canvas.height = rect.height;
 
-        // Restore backup drawing
         if (tempCanvas) {
             ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.width, canvas.height);
         }
@@ -480,7 +478,7 @@
         chat.innerHTML += `<div style="margin-top:8px; text-align:right; color:#007aff;"><b>You:</b> ${input.value}</div>`;
         input.value = '';
         setTimeout(() => {
-            chat.innerHTML += `<div style="margin-top:8px; color:#aaa;"><b>Gemini:</b> NextOS is looking great! Need any other settings or app updates?</div>`;
+            chat.innerHTML += `<div style="margin-top:8px; color:#aaa;"><b>Nextile AI:</b> NextOS is looking great! Need any other settings or app updates?</div>`;
             chat.scrollTop = chat.scrollHeight;
         }, 500);
     }

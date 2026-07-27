@@ -122,6 +122,10 @@
         /* MUSIC PLAYER STYLES */
         .track-item { padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.05); margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .track-item:hover { background: rgba(255,255,255,0.15); }
+
+        /* PAINT APP STYLES */
+        .paint-toolbar { display: flex; gap: 10px; align-items: center; padding: 8px; background: #2c2c2e; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .paint-btn { padding: 4px 8px; background: #007aff; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body onclick="closeAllMenus()">
@@ -202,6 +206,7 @@
 
     <div id="dock-container"><div id="dock">
         <div class="dk" title="Safari" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
+        <div class="dk" title="Paint" onclick="openApp('paint')"><i data-lucide="palette"></i></div>
         <div class="dk" title="Notes" onclick="openApp('notes')"><i data-lucide="file-text"></i></div>
         <div class="dk" title="Music" onclick="openApp('music')"><i data-lucide="music"></i></div>
         <div class="dk" title="Photos" onclick="openApp('photos')"><i data-lucide="image"></i></div>
@@ -267,6 +272,22 @@
         myPage: {
             title: 'My Page',
             action: () => window.open('https://guns.lol/nextile', '_blank')
+        },
+        paint: {
+            title: 'Canvas Paint', w: 500, h: 420,
+            content: () => `
+                <div style="display:flex; flex-direction:column; height:100%;">
+                    <div class="paint-toolbar">
+                        <label style="font-size:12px;">Color: </label>
+                        <input type="color" id="paint-color" value="#007aff" style="border:none; background:none; cursor:pointer; width:25px; height:25px;">
+                        <label style="font-size:12px; margin-left:10px;">Size: </label>
+                        <input type="range" id="paint-size" min="1" max="30" value="5" style="width:80px;">
+                        <button class="paint-btn" style="margin-left:auto;" onclick="clearCanvas()">Clear</button>
+                    </div>
+                    <div style="flex:1; background:#ffffff; position:relative;">
+                        <canvas id="paint-canvas" style="width:100%; height:100%; display:block; cursor:crosshair;"></canvas>
+                    </div>
+                </div>`
         },
         notes: {
             title: 'Notes', w: 400, h: 400,
@@ -357,6 +378,55 @@
         help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Use the dock icons to open apps or external pages.<br>- Customize display wallpaper and brightness in Settings.</p></div>` }
     };
 
+    function initPaint() {
+        const canvas = document.getElementById('paint-canvas');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+
+        let painting = false;
+
+        function startPosition(e) {
+            painting = true;
+            draw(e);
+        }
+
+        function finishedPosition() {
+            painting = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if(!painting) return;
+            const rect = canvas.getBoundingClientRect();
+            const color = document.getElementById('paint-color').value;
+            const size = document.getElementById('paint-size').value;
+
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = color;
+
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        canvas.addEventListener('mousedown', startPosition);
+        canvas.addEventListener('mouseup', finishedPosition);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseleave', finishedPosition);
+    }
+
+    function clearCanvas() {
+        const canvas = document.getElementById('paint-canvas');
+        if(canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
     function playSong(url, title) {
         const player = document.getElementById('audio-player');
         const titleEl = document.getElementById('now-playing-title');
@@ -424,6 +494,7 @@
         os.appendChild(w); wins[id] = w;
         
         if(id === 'calendar') rC();
+        if(id === 'paint') setTimeout(initPaint, 50);
         if(id === 'notes') {
             const saved = localStorage.getItem('nextos_notes');
             if(saved) document.getElementById('notes-input').value = saved;

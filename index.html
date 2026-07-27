@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - No Password Prompt Build</title>
+    <title>NextOS - Fixed Startup Chime Build</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -18,7 +18,20 @@
         #lock-screen.unlocked { transform: translateY(-100%); }
         .lock-blur { position: absolute; inset: 0; backdrop-filter: blur(35px); background: rgba(0,0,0,0.3); z-index: -1; }
         #lock-time { font-size: 100px; color: white; font-weight: 200; }
-        #pass-box { margin-top: 20px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 12px 30px; border-radius: 25px; color: white; text-align: center; outline: none; backdrop-filter: blur(15px); }
+        
+        #pass-box { 
+            margin-top: 20px; 
+            background: rgba(255,255,255,0.2); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            padding: 12px 30px; 
+            border-radius: 25px; 
+            color: white; 
+            text-align: center; 
+            outline: none; 
+            backdrop-filter: blur(15px); 
+            -webkit-text-security: disc; 
+            text-security: disc;
+        }
 
         /* MENUBAR */
         #menubar { position: absolute; top: 0; width: 100%; height: 28px; background: rgba(20, 20, 25, 0.75); backdrop-filter: blur(30px); display: flex; align-items: center; padding: 0 15px; z-index: 10000; border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white; font-size: 13px; }
@@ -74,7 +87,7 @@
 <div id="lock-screen">
     <div class="lock-blur"></div>
     <div id="lock-time">00:00 AM</div>
-    <input type="password" id="pass-box" name="lockscreen-pin" autocomplete="off" placeholder="Enter Password" onkeydown="if(event.key==='Enter') unlock()">
+    <input type="text" id="pass-box" autocomplete="off" placeholder="Enter Password" onkeydown="if(event.key==='Enter') unlock()">
 </div>
 
 <div id="os">
@@ -160,7 +173,35 @@
     let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
     const today = new Date();
 
-    const macChimeAudio = new Audio('https://ia800600.us.archive.org/8/items/mac-os-startup-sound/Mac%20OS%20X%20Startup%20Sound.mp3');
+    // Synthesis of authentic macOS F# Startup Chime via Web Audio API
+    function playMacStartupChime() {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        // F# Major Chord frequencies: F#2, C#3, F#3, A#3, C#4, F#4
+        const freqs = [92.50, 138.59, 185.00, 233.08, 277.18, 369.99];
+
+        freqs.forEach(freq => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'triangle'; 
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+            // Volume Envelope with long natural decay
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.08); 
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.8); 
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 3.8);
+        });
+    }
 
     const themes = [
         { name: 'Classic NextOS', url: 'https://cdn.discordapp.com/attachments/1490821953358135490/1493679242230104235/NextOS_wallpaper.png?ex=69dfd8b2&is=69de8732&hm=5e463232114b4fab3c4d65a07420822a271d5d3a5d1998f8472862886a915221&' },
@@ -228,15 +269,8 @@
         help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Change desktop wallpapers and brightness inside Settings.<br>- Use traffic lights to close, minimize, or maximize apps.<br>- Use Gemini sparkle for quick AI assistance.</p></div>` }
     };
 
-    function playUnlockSound() {
-        macChimeAudio.currentTime = 0;
-        macChimeAudio.play().catch(e => console.log('Audio playback prevented:', e));
-    }
-
     function setThemeByIndex(idx) {
-        if (themes[idx]) {
-            setTheme(themes[idx].url);
-        }
+        if (themes[idx]) setTheme(themes[idx].url);
     }
 
     function setTheme(url) {
@@ -257,7 +291,7 @@
     }
 
     function unlock() { 
-        playUnlockSound();
+        playMacStartupChime();
         lock.classList.add('unlocked'); 
         os.style.display = 'block'; 
         document.getElementById('pass-box').value = '';
@@ -308,7 +342,6 @@
         const startDay = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
         const isCurrentMonth = viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear();
         
-        // Days of week header row
         const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
         let dayHeadersHtml = weekdays.map(day => `<div style="font-weight:bold; color:#8e8e93; font-size:12px; padding:6px 0;">${day}</div>`).join('');
         

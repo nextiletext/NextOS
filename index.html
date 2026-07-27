@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - nextile</title>
+    <title>NextOS - project</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -382,8 +382,10 @@
         const canvas = document.getElementById('paint-canvas');
         if(!canvas) return;
         const ctx = canvas.getContext('2d');
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
+        
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
 
         let painting = false;
 
@@ -399,7 +401,14 @@
 
         function draw(e) {
             if(!painting) return;
-            const rect = canvas.getBoundingClientRect();
+            const currentRect = canvas.getBoundingClientRect();
+            
+            const scaleX = canvas.width / currentRect.width;
+            const scaleY = canvas.height / currentRect.height;
+
+            const x = (e.clientX - currentRect.left) * scaleX;
+            const y = (e.clientY - currentRect.top) * scaleY;
+
             const color = document.getElementById('paint-color').value;
             const size = document.getElementById('paint-size').value;
 
@@ -407,10 +416,10 @@
             ctx.lineCap = 'round';
             ctx.strokeStyle = color;
 
-            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.lineTo(x, y);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.moveTo(x, y);
         }
 
         canvas.addEventListener('mousedown', startPosition);
@@ -535,7 +544,12 @@
 
     window.cD = (d) => { viewDate.setMonth(viewDate.getMonth()+d); rC(); };
     window.hC = (b) => { const d = document.getElementById('d'); if(b==="C") calcVal=""; else if(b==="=") {try{calcVal=eval(calcVal).toString()}catch{calcVal="Error"}} else calcVal+=b; d.innerText = calcVal||"0"; };
-    window.tF = (id) => wins[id].classList.toggle('fullscreen');
+    
+    window.tF = (id) => {
+        wins[id].classList.toggle('fullscreen');
+        if (id === 'paint') setTimeout(initPaint, 100);
+    };
+
     window.minA = (id) => wins[id].classList.add('minimized');
     window.cA = (id) => { os.removeChild(wins[id]); delete wins[id]; };
 

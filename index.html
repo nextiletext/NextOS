@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Fixed Startup Chime Build</title>
+    <title>NextOS - No Password Prompt Guaranteed</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -19,6 +19,7 @@
         .lock-blur { position: absolute; inset: 0; backdrop-filter: blur(35px); background: rgba(0,0,0,0.3); z-index: -1; }
         #lock-time { font-size: 100px; color: white; font-weight: 200; }
         
+        /* Div masquerading as an input to completely bypass browser Password Managers */
         #pass-box { 
             margin-top: 20px; 
             background: rgba(255,255,255,0.2); 
@@ -29,8 +30,19 @@
             text-align: center; 
             outline: none; 
             backdrop-filter: blur(15px); 
-            -webkit-text-security: disc; 
+            min-width: 220px;
+            cursor: text;
+            -webkit-user-select: text;
+            user-select: text;
+            -webkit-text-security: disc;
             text-security: disc;
+        }
+
+        #pass-box:empty:before {
+            content: attr(data-placeholder);
+            color: rgba(255,255,255,0.6);
+            -webkit-text-security: none;
+            text-security: none;
         }
 
         /* MENUBAR */
@@ -87,7 +99,8 @@
 <div id="lock-screen">
     <div class="lock-blur"></div>
     <div id="lock-time">00:00 AM</div>
-    <input type="text" id="pass-box" autocomplete="off" placeholder="Enter Password" onkeydown="if(event.key==='Enter') unlock()">
+    
+    <div id="pass-box" contenteditable="true" data-placeholder="Enter Password" onkeydown="if(event.key==='Enter'){ event.preventDefault(); unlock(); }"></div>
 </div>
 
 <div id="os">
@@ -173,31 +186,23 @@
     let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
     const today = new Date();
 
-    // Synthesis of authentic macOS F# Startup Chime via Web Audio API
     function playMacStartupChime() {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
         const ctx = new AudioCtx();
         if (ctx.state === 'suspended') ctx.resume();
 
-        // F# Major Chord frequencies: F#2, C#3, F#3, A#3, C#4, F#4
         const freqs = [92.50, 138.59, 185.00, 233.08, 277.18, 369.99];
-
         freqs.forEach(freq => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-
             osc.type = 'triangle'; 
             osc.frequency.setValueAtTime(freq, ctx.currentTime);
-
-            // Volume Envelope with long natural decay
             gain.gain.setValueAtTime(0, ctx.currentTime);
             gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.08); 
             gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.8); 
-
             osc.connect(gain);
             gain.connect(ctx.destination);
-
             osc.start(ctx.currentTime);
             osc.stop(ctx.currentTime + 3.8);
         });
@@ -269,14 +274,8 @@
         help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Change desktop wallpapers and brightness inside Settings.<br>- Use traffic lights to close, minimize, or maximize apps.<br>- Use Gemini sparkle for quick AI assistance.</p></div>` }
     };
 
-    function setThemeByIndex(idx) {
-        if (themes[idx]) setTheme(themes[idx].url);
-    }
-
-    function setTheme(url) {
-        if (!url || !url.trim()) return;
-        document.documentElement.style.setProperty('--bg', `url('${url.trim()}')`);
-    }
+    function setThemeByIndex(idx) { if (themes[idx]) setTheme(themes[idx].url); }
+    function setTheme(url) { if (!url || !url.trim()) return; document.documentElement.style.setProperty('--bg', `url('${url.trim()}')`); }
 
     function sendGeminiMsg() {
         const input = document.getElementById('gemini-in');
@@ -294,35 +293,16 @@
         playMacStartupChime();
         lock.classList.add('unlocked'); 
         os.style.display = 'block'; 
-        document.getElementById('pass-box').value = '';
+        document.getElementById('pass-box').innerText = '';
     }
     
     function lockOS() { lock.classList.remove('unlocked'); closeAllMenus(); }
-    
-    function toggleMenu(id) { 
-        closeAllMenus();
-        document.getElementById(id).classList.toggle('active'); 
-    }
-    
-    function closeAllMenus() { 
-        document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active')); 
-    }
-
-    function minimizeAll() {
-        Object.keys(wins).forEach(id => minA(id));
-    }
-
-    function closeAllApps() {
-        Object.keys(wins).forEach(id => cA(id));
-    }
-
-    function toggleDarkMode() {
-        alert('Theme updated!');
-    }
-
-    function loadSearch(url) {
-        document.getElementById('browser-frame').src = url;
-    }
+    function toggleMenu(id) { closeAllMenus(); document.getElementById(id).classList.toggle('active'); }
+    function closeAllMenus() { document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active')); }
+    function minimizeAll() { Object.keys(wins).forEach(id => minA(id)); }
+    function closeAllApps() { Object.keys(wins).forEach(id => cA(id)); }
+    function toggleDarkMode() { alert('Theme updated!'); }
+    function loadSearch(url) { document.getElementById('browser-frame').src = url; }
 
     function openApp(id) {
         closeAllMenus();

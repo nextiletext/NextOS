@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Unlock Sound Effect Build</title>
+    <title>NextOS - macOS Startup Sound Build</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -156,6 +156,8 @@
     let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
     const today = new Date();
 
+    const macChimeAudio = new Audio('https://ia800600.us.archive.org/8/items/mac-os-startup-sound/Mac%20OS%20X%20Startup%20Sound.mp3');
+
     const themes = [
         { name: 'Classic NextOS', url: 'https://cdn.discordapp.com/attachments/1490821953358135490/1493679242230104235/NextOS_wallpaper.png?ex=69dfd8b2&is=69de8732&hm=5e463232114b4fab3c4d65a07420822a271d5d3a5d1998f8472862886a915221&' },
         { name: 'Dark Abstract', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80' },
@@ -223,29 +225,8 @@
     };
 
     function playUnlockSound() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const now = ctx.currentTime;
-            
-            // Dual chime synth effect
-            [523.25, 659.25, 783.99].forEach((freq, i) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, now + (i * 0.08));
-                
-                gain.gain.setValueAtTime(0, now + (i * 0.08));
-                gain.gain.linearRampToValueAtTime(0.15, now + (i * 0.08) + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.08) + 0.5);
-                
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
-                osc.start(now + (i * 0.08));
-                osc.stop(now + (i * 0.08) + 0.5);
-            });
-        } catch(e) { console.log('Audio Context Error:', e); }
+        macChimeAudio.currentTime = 0;
+        macChimeAudio.play().catch(e => console.log('Audio playback prevented:', e));
     }
 
     function setThemeByIndex(idx) {

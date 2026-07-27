@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - Browser Final Fix</title>
+    <title>NextOS - Interactive Buttons Build</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -23,12 +23,19 @@
         /* MENUBAR */
         #menubar { position: absolute; top: 0; width: 100%; height: 28px; background: rgba(20, 20, 25, 0.75); backdrop-filter: blur(30px); display: flex; align-items: center; padding: 0 15px; z-index: 10000; border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white; font-size: 13px; }
         .apple-logo { cursor: pointer; display: flex; align-items: center; padding: 0 10px; margin-left: -10px; height: 100%; position: relative; }
-        .dropdown { position: absolute; top: 28px; left: 5px; width: 200px; background: rgba(35, 35, 40, 0.95); backdrop-filter: blur(40px); border-radius: 6px; border: 0.5px solid rgba(255,255,255,0.1); padding: 5px; display: none; }
+        
+        .dropdown { position: absolute; top: 28px; left: 0; width: 180px; background: rgba(35, 35, 40, 0.95); backdrop-filter: blur(40px); border-radius: 6px; border: 0.5px solid rgba(255,255,255,0.1); padding: 5px; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10001; }
         .dropdown.active { display: block; }
-        .drop-item { padding: 4px 12px; border-radius: 4px; font-size: 13px; color: white; cursor: default; }
+        .drop-item { padding: 5px 12px; border-radius: 4px; font-size: 13px; color: white; cursor: pointer; }
         .drop-item:hover { background: #007aff; }
-        .gemini-sparkle { width: 16px; height: 16px; margin-right: 8px; vertical-align: middle; }
-        .m-item { margin-left: 15px; opacity: 0.9; cursor: default; }
+
+        .m-menu-wrapper { position: relative; display: inline-block; }
+        .gemini-btn { display: flex; align-items: center; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: background 0.2s; }
+        .gemini-btn:hover { background: rgba(255,255,255,0.15); }
+        .gemini-sparkle { width: 16px; height: 16px; vertical-align: middle; }
+        
+        .m-item { margin-left: 10px; opacity: 0.9; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+        .m-item:hover { background: rgba(255,255,255,0.15); opacity: 1; }
         .m-bold { font-weight: 700; margin-left: 10px; }
 
         /* WINDOWS */
@@ -57,20 +64,72 @@
         .win-content { flex: 1; overflow: hidden; background: #1c1c1e; color: white; }
     </style>
 </head>
-<body onclick="closeMenu()">
+<body onclick="closeAllMenus()">
 
 <div id="lock-screen"><div class="lock-blur"></div><div id="lock-time">00:00 AM</div><input type="password" id="pass-box" placeholder="Enter Password" onkeydown="if(event.key==='Enter') unlock()"></div>
 
 <div id="os">
     <div id="menubar">
-        <div class="apple-logo" onclick="event.stopPropagation(); toggleMenu()"><i data-lucide="apple" style="width:16px;"></i>
+        <div class="m-menu-wrapper">
+            <div class="apple-logo" onclick="event.stopPropagation(); toggleMenu('apple-dropdown')"><i data-lucide="apple" style="width:16px;"></i></div>
             <div class="dropdown" id="apple-dropdown">
                 <div class="drop-item" onclick="lockOS()">Lock Screen</div>
+                <div class="drop-item" onclick="openApp('settings')">System Settings...</div>
             </div>
         </div>
-        <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef629dc620163.svg" class="gemini-sparkle">
+
+        <div class="gemini-btn" title="Open Gemini AI" onclick="openApp('gemini')">
+            <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef629dc620163.svg" class="gemini-sparkle">
+        </div>
+
         <span class="m-bold" id="active-app-name">Finder</span>
-        <span class="m-item">File</span><span class="m-item">Edit</span><span class="m-item">View</span><span class="m-item">Go</span><span class="m-item">Window</span><span class="m-item">Help</span>
+
+        <div class="m-menu-wrapper">
+            <span class="m-item" onclick="event.stopPropagation(); toggleMenu('file-dropdown')">File</span>
+            <div class="dropdown" id="file-dropdown">
+                <div class="drop-item" onclick="openApp('terminal')">New Terminal Window</div>
+                <div class="drop-item" onclick="openApp('browser')">New Browser Window</div>
+            </div>
+        </div>
+
+        <div class="m-menu-wrapper">
+            <span class="m-item" onclick="event.stopPropagation(); toggleMenu('edit-dropdown')">Edit</span>
+            <div class="dropdown" id="edit-dropdown">
+                <div class="drop-item" onclick="alert('Undo action')">Undo</div>
+                <div class="drop-item" onclick="alert('Redo action')">Redo</div>
+            </div>
+        </div>
+
+        <div class="m-menu-wrapper">
+            <span class="m-item" onclick="event.stopPropagation(); toggleMenu('view-dropdown')">View</span>
+            <div class="dropdown" id="view-dropdown">
+                <div class="drop-item" onclick="toggleDarkMode()">Toggle Theme Accent</div>
+            </div>
+        </div>
+
+        <div class="m-menu-wrapper">
+            <span class="m-item" onclick="event.stopPropagation(); toggleMenu('go-dropdown')">Go</span>
+            <div class="dropdown" id="go-dropdown">
+                <div class="drop-item" onclick="openApp('browser')">Go to Web Browser</div>
+                <div class="drop-item" onclick="openApp('terminal')">Go to Shell Terminal</div>
+            </div>
+        </div>
+
+        <div class="m-menu-wrapper">
+            <span class="m-item" onclick="event.stopPropagation(); toggleMenu('window-dropdown')">Window</span>
+            <div class="dropdown" id="window-dropdown">
+                <div class="drop-item" onclick="minimizeAll()">Minimize All</div>
+                <div class="drop-item" onclick="closeAllApps()">Close All Windows</div>
+            </div>
+        </div>
+
+        <div class="m-menu-wrapper">
+            <span class="m-item" onclick="event.stopPropagation(); toggleMenu('help-dropdown')">Help</span>
+            <div class="dropdown" id="help-dropdown">
+                <div class="drop-item" onclick="openApp('help')">NextOS Help Guide</div>
+            </div>
+        </div>
+
         <span id="clock-container" style="margin-left:auto; font-weight:500;">
             <span id="menubar-date" style="margin-right:10px;"></span>
             <span id="clock">00:00 AM</span>
@@ -88,7 +147,7 @@
 </div>
 
 <script>
-    const os = document.getElementById('os'), lock = document.getElementById('lock-screen'), dropdown = document.getElementById('apple-dropdown');
+    const os = document.getElementById('os'), lock = document.getElementById('lock-screen');
     let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
     const today = new Date();
 
@@ -103,23 +162,73 @@
                 </div>
                 <iframe id="browser-frame" src="https://www.google.com/search?igu=1" style="width:100%; height:calc(100% - 45px); border:none; background:white;"></iframe>` 
         },
+        gemini: {
+            title: 'Gemini Assistant', w: 400, h: 500,
+            content: () => `
+                <div style="display:flex; flex-direction:column; height:100%; padding:15px; background:#1e1e24;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                        <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef629dc620163.svg" style="width:20px;">
+                        <h4 style="color:#fff;">Gemini AI</h4>
+                    </div>
+                    <div id="gemini-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px;">
+                        Hello! How can I assist you in NextOS today?
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <input id="gemini-in" placeholder="Ask Gemini..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendGeminiMsg()">
+                        <button onclick="sendGeminiMsg()" style="padding:8px 12px; background:#007aff; border:none; border-radius:6px; color:white; cursor:pointer;">Send</button>
+                    </div>
+                </div>`
+        },
         calc: { title: 'Calculator', w: 280, h: 420, content: () => `<div id="d" style="padding:20px; font-size:40px; text-align:right; height:70px; background:#111;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.2px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333;">${b}</div>`).join('')}</div>` },
         calendar: { title: 'Calendar', w: 350, h: 400, content: () => `<div id="cal-root"></div>` },
         terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v16.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
         weather: { title: 'Weather', w: 300, h: 400, content: () => `<div style="height:100%; background:linear-gradient(#1d3ede, #01befe); padding:40px; text-align:center;"><i data-lucide="sun" style="width:50px; height:50px;"></i><h1>22°C</h1><p>Sunny</p></div>` },
-        settings: { title: 'Settings', w: 400, h: 250, content: () => `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` }
+        settings: { title: 'Settings', w: 400, h: 250, content: () => `<div style="padding:20px;"><h3>Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%;"></div>` },
+        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Use the traffic buttons (red/yellow/green) to close, minimize, or maximize windows.<br>- Click the Gemini sparkle to launch the AI Assistant.<br>- Click menubar items for shortcuts.</p></div>` }
     };
 
+    function sendGeminiMsg() {
+        const input = document.getElementById('gemini-in');
+        const chat = document.getElementById('gemini-chat');
+        if(!input.value.trim()) return;
+        chat.innerHTML += `<div style="margin-top:8px; text-align:right; color:#007aff;"><b>You:</b> ${input.value}</div>`;
+        input.value = '';
+        setTimeout(() => {
+            chat.innerHTML += `<div style="margin-top:8px; color:#aaa;"><b>Gemini:</b> NextOS is fully operational! What would you like to tweak next?</div>`;
+            chat.scrollTop = chat.scrollHeight;
+        }, 500);
+    }
+
     function unlock() { lock.classList.add('unlocked'); os.style.display = 'block'; }
-    function lockOS() { lock.classList.remove('unlocked'); closeMenu(); }
-    function toggleMenu() { dropdown.classList.toggle('active'); }
-    function closeMenu() { dropdown.classList.remove('active'); }
+    function lockOS() { lock.classList.remove('unlocked'); closeAllMenus(); }
+    
+    function toggleMenu(id) { 
+        closeAllMenus();
+        document.getElementById(id).classList.toggle('active'); 
+    }
+    
+    function closeAllMenus() { 
+        document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active')); 
+    }
+
+    function minimizeAll() {
+        Object.keys(wins).forEach(id => minA(id));
+    }
+
+    function closeAllApps() {
+        Object.keys(wins).forEach(id => cA(id));
+    }
+
+    function toggleDarkMode() {
+        alert('Theme updated!');
+    }
 
     function loadSearch(url) {
         document.getElementById('browser-frame').src = url;
     }
 
     function openApp(id) {
+        closeAllMenus();
         if (wins[id]) { wins[id].classList.remove('minimized'); wins[id].style.zIndex = ++zIndex; return; }
         const a = apps[id], w = document.createElement('div');
         w.className = 'win'; w.id = 'win-'+id; w.style.width = a.w+'px'; w.style.height = a.h+'px';

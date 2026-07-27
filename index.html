@@ -60,7 +60,6 @@
         .m-menu-wrapper { position: relative; display: inline-block; }
         .gemini-btn { display: flex; align-items: center; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: background 0.2s; }
         .gemini-btn:hover { background: rgba(255,255,255,0.15); }
-        .gemini-sparkle { width: 16px; height: 16px; vertical-align: middle; }
         
         .m-item { margin-left: 10px; opacity: 0.9; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
         .m-item:hover { background: rgba(255,255,255,0.15); opacity: 1; }
@@ -147,7 +146,7 @@
         </div>
 
         <div class="gemini-btn" title="Open Nextile AI" onclick="openApp('gemini')">
-            <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef629dc620163.svg" class="gemini-sparkle">
+            <i data-lucide="bot" style="width:17px; height:17px; color:#007aff;"></i>
         </div>
 
         <span class="m-bold" id="active-app-name">Finder</span>
@@ -206,6 +205,7 @@
 
     <div id="dock-container"><div id="dock">
         <div class="dk" title="Safari" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
+        <div class="dk" title="Nextile AI" onclick="openApp('gemini')"><i data-lucide="bot"></i></div>
         <div class="dk" title="Paint" onclick="openApp('paint')"><i data-lucide="palette"></i></div>
         <div class="dk" title="Notes" onclick="openApp('notes')"><i data-lucide="file-text"></i></div>
         <div class="dk" title="Music" onclick="openApp('music')"><i data-lucide="music"></i></div>
@@ -270,7 +270,7 @@
 
     const apps = {
         myPage: {
-            title: 'Creators Page',
+            title: 'My Page',
             action: () => window.open('https://guns.lol/nextile', '_blank')
         },
         paint: {
@@ -339,18 +339,18 @@
                 </div>`
         },
         gemini: {
-            title: 'Nextile AI', w: 400, h: 500,
+            title: 'Nextile AI', w: 420, h: 520,
             content: () => `
                 <div style="display:flex; flex-direction:column; height:100%; padding:15px; background:#1e1e24;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                        <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef629dc620163.svg" style="width:20px;">
-                        <h4 style="color:#fff;">Nextile AI</h4>
+                        <i data-lucide="bot" style="width:22px; height:22px; color:#007aff;"></i>
+                        <h4 style="color:#fff;">Nextile AI Assistant</h4>
                     </div>
-                    <div id="gemini-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px;">
-                        Hello! I am Nextile AI. How can I assist you in NextOS today?
+                    <div id="gemini-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px; line-height:1.4;">
+                        Hello! I am <b>Nextile AI</b>. Ask me questions, solve math, or tell me to open apps like <i>"open paint"</i>!
                     </div>
                     <div style="display:flex; gap:5px;">
-                        <input id="gemini-in" placeholder="Ask Nextile AI..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendGeminiMsg()">
+                        <input id="gemini-in" placeholder="Ask or command Nextile AI..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendGeminiMsg()">
                         <button onclick="sendGeminiMsg()" style="padding:8px 12px; background:#007aff; border:none; border-radius:6px; color:white; cursor:pointer;">Send</button>
                     </div>
                 </div>`
@@ -471,16 +471,96 @@
     function setThemeByIndex(idx) { if (themes[idx]) setTheme(themes[idx].url); }
     function setTheme(url) { if (!url || !url.trim()) return; document.documentElement.style.setProperty('--bg', `url('${url.trim()}')`); }
 
-    function sendGeminiMsg() {
+    /* FUNCTIONAL NEXTILE AI ENGINE */
+    async function sendGeminiMsg() {
         const input = document.getElementById('gemini-in');
         const chat = document.getElementById('gemini-chat');
-        if(!input.value.trim()) return;
-        chat.innerHTML += `<div style="margin-top:8px; text-align:right; color:#007aff;"><b>You:</b> ${input.value}</div>`;
+        const query = input.value.trim();
+        if(!query) return;
+
+        chat.innerHTML += `<div style="margin-top:8px; text-align:right; color:#007aff;"><b>You:</b> ${escapeHtml(query)}</div>`;
         input.value = '';
-        setTimeout(() => {
-            chat.innerHTML += `<div style="margin-top:8px; color:#aaa;"><b>Nextile AI:</b> NextOS is looking great! Need any other settings or app updates?</div>`;
-            chat.scrollTop = chat.scrollHeight;
-        }, 500);
+        chat.scrollTop = chat.scrollHeight;
+
+        const loadingId = 'loading-' + Date.now();
+        chat.innerHTML += `<div id="${loadingId}" style="margin-top:8px; color:#aaa;"><b>Nextile AI:</b> <i>Thinking...</i></div>`;
+        chat.scrollTop = chat.scrollHeight;
+
+        const reply = await processNextileAI(query);
+        const loader = document.getElementById(loadingId);
+        if (loader) {
+            loader.innerHTML = `<b>Nextile AI:</b> ${reply}`;
+        }
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function processNextileAI(q) {
+        const lower = q.toLowerCase();
+
+        // 1. System OS Commands
+        if (lower.includes('open paint')) { openApp('paint'); return "Opening Paint for you!"; }
+        if (lower.includes('open safari') || lower.includes('open browser')) { openApp('browser'); return "Opening Safari!"; }
+        if (lower.includes('open notes')) { openApp('notes'); return "Opening Notes!"; }
+        if (lower.includes('open music')) { openApp('music'); return "Opening Music Player!"; }
+        if (lower.includes('open photos')) { openApp('photos'); return "Opening Scenery Photos!"; }
+        if (lower.includes('open calc') || lower.includes('open calculator')) { openApp('calc'); return "Opening Calculator!"; }
+        if (lower.includes('open calendar')) { openApp('calendar'); return "Opening Calendar!"; }
+        if (lower.includes('open terminal')) { openApp('terminal'); return "Opening Shell Terminal!"; }
+        if (lower.includes('open weather')) { openApp('weather'); return "Opening Weather App!"; }
+        if (lower.includes('open settings')) { openApp('settings'); return "Opening System Settings!"; }
+        if (lower.includes('lock screen') || lower.includes('lock os')) { lockOS(); return "Locking screen..."; }
+        if (lower.includes('clear canvas') || lower.includes('clear paint')) { clearCanvas(); return "Cleared the paint canvas for you!"; }
+
+        // 2. Time & Date
+        if (lower.includes('time')) { return `The current time is <b>${new Date().toLocaleTimeString([], {hour: 'numeric', minute:'2-digit', hour12: true})}</b>.`; }
+        if (lower.includes('date') || lower.includes('day')) { return `Today is <b>${new Date().toLocaleDateString([], {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'})}</b>.`; }
+
+        // 3. Math Expression Solver
+        if (/^[0-9+\-*/().\s^]+$/.test(q) && /[0-9]/.test(q)) {
+            try {
+                const res = eval(q.replace(/\^/g, '**'));
+                return `The answer is <b>${res}</b>.`;
+            } catch(e) {}
+        }
+
+        // 4. Live Knowledge API (Wikipedia)
+        if (lower.startsWith('what is') || lower.startsWith('who is') || lower.startsWith('tell me about') || lower.startsWith('define')) {
+            const searchTerm = q.replace(/^(what is|who is|tell me about|define)\s+/i, '').trim();
+            try {
+                const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.extract) {
+                        return `${data.extract}`;
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // 5. Friendly Conversations
+        if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+            return "Hello there! How can I help you in NextOS today? You can ask me questions, calculate math, or tell me to open apps!";
+        }
+        if (lower.includes('who are you') || lower.includes('your name')) {
+            return "I am <b>Nextile AI</b>, your intelligent built-in assistant for NextOS!";
+        }
+
+        // Default fallback query lookup
+        try {
+            const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.extract && data.type !== 'disambiguation') {
+                    return `${data.extract}`;
+                }
+            }
+        } catch(e) {}
+
+        return `I'm not sure about that exact question, but you can ask me to open apps (e.g. <i>"open paint"</i>), check the time, solve math equations, or search topics (e.g. <i>"What is Mars?"</i>)!`;
     }
 
     function unlock() { 

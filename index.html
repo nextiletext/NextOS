@@ -66,7 +66,7 @@
         .m-item:hover { background: rgba(255,255,255,0.15); opacity: 1; }
         .m-bold { font-weight: 700; margin-left: 10px; }
 
-        /* WINDOWS (GPU Acceleration & Rendering Isolation) */
+        /* WINDOWS */
         .win { 
             position: absolute; 
             border-radius: 12px; 
@@ -118,6 +118,10 @@
         .photo-preview img { max-width: 100%; max-height: 80%; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         .photo-close-btn { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; }
         .photo-close-btn:hover { background: rgba(255,255,255,0.4); }
+
+        /* MUSIC PLAYER STYLES */
+        .track-item { padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.05); margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .track-item:hover { background: rgba(255,255,255,0.15); }
     </style>
 </head>
 <body onclick="closeAllMenus()">
@@ -198,6 +202,8 @@
 
     <div id="dock-container"><div id="dock">
         <div class="dk" title="Safari" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
+        <div class="dk" title="Notes" onclick="openApp('notes')"><i data-lucide="file-text"></i></div>
+        <div class="dk" title="Music" onclick="openApp('music')"><i data-lucide="music"></i></div>
         <div class="dk" title="Photos" onclick="openApp('photos')"><i data-lucide="image"></i></div>
         <div class="dk" title="Calculator" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
         <div class="dk" title="Calendar" onclick="openApp('calendar')"><i data-lucide="calendar"></i></div>
@@ -248,17 +254,44 @@
         'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=800&q=80'
+        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80'
+    ];
+
+    const songs = [
+        { name: "Lofi Chill Stream", url: "https://stream.zeno.fm/f3wvbbqmdg8uv" },
+        { name: "Chillhop Beats", url: "https://stream.zeno.fm/0r0xa792kwzuv" },
+        { name: "Acoustic Breeze", url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" }
     ];
 
     const apps = {
         myPage: {
             title: 'My Page',
-            action: () => window.open('https://guns.lol/nextile', '_blank')
+            action: () => window.open('YOUR_LINK_HERE', '_blank')
+        },
+        notes: {
+            title: 'Notes', w: 400, h: 400,
+            content: () => `
+                <div style="display:flex; flex-direction:column; height:100%; padding:10px;">
+                    <textarea id="notes-input" placeholder="Type your notes here..." style="flex:1; width:100%; background:#121215; border:none; color:white; padding:12px; border-radius:8px; outline:none; resize:none; font-family:sans-serif;" oninput="localStorage.setItem('nextos_notes', this.value)"></textarea>
+                </div>`
+        },
+        music: {
+            title: 'Music Player', w: 350, h: 320,
+            content: () => `
+                <div style="padding:15px; display:flex; flex-direction:column; height:100%;">
+                    <div style="text-align:center; margin-bottom:15px;">
+                        <h4 id="now-playing-title" style="margin-bottom:5px;">Select a Track</h4>
+                        <audio id="audio-player" controls style="width:100%; margin-top:5px;"></audio>
+                    </div>
+                    <div style="flex:1; overflow-y:auto;">
+                        ${songs.map((song, i) => `
+                            <div class="track-item" onclick="playSong('${song.url}', '${song.name}')">
+                                <span><i data-lucide="music" style="width:14px; vertical-align:middle; margin-right:6px;"></i> ${song.name}</span>
+                                <i data-lucide="play" style="width:14px;"></i>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`
         },
         browser: { 
             title: 'Safari', w: 900, h: 600, 
@@ -304,37 +337,35 @@
         calc: { title: 'Calculator', w: 280, h: 420, content: () => `<div id="d" style="padding:20px; font-size:40px; text-align:right; height:70px; background:#111;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.2px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333;">${b}</div>`).join('')}</div>` },
         calendar: { title: 'Calendar', w: 350, h: 420, content: () => `<div id="cal-root"></div>` },
         terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v16.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
-        
         weather: { 
             title: 'Weather', w: 450, h: 550, 
             content: () => `<iframe src="https://nextiletext.github.io/Weather-app3/" style="width:100%; height:100%; border:none; background:#1c1c1e;"></iframe>` 
         },
-
         settings: { 
             title: 'Settings', w: 420, h: 420, 
             content: () => `
                 <div style="padding:20px;">
                     <h3 style="margin-bottom:8px; font-size:15px;">Display Brightness</h3>
                     <input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%; accent-color:#007aff;">
-                    
                     <hr style="border:0; border-top:1px solid #3a3a3c; margin:20px 0;">
-                    
                     <h3 style="margin-bottom:8px; font-size:15px;">Wallpaper Themes</h3>
                     <div class="theme-grid">
                         ${themes.map((t, index) => `<div class="theme-card" style="background-image:url('${t.url}');" onclick="setThemeByIndex(${index})"><span>${t.name}</span></div>`).join('')}
                     </div>
-
-                    <div style="margin-top:15px;">
-                        <p style="font-size:12px; color:#aaa; margin-bottom:5px;">Custom Wallpaper URL:</p>
-                        <div style="display:flex; gap:6px;">
-                            <input id="custom-bg-input" placeholder="Paste image link..." style="flex:1; padding:6px 10px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none; font-size:12px;">
-                            <button onclick="setTheme(document.getElementById('custom-bg-input').value)" style="padding:6px 12px; background:#007aff; border:none; border-radius:6px; color:white; cursor:pointer; font-size:12px;">Apply</button>
-                        </div>
-                    </div>
                 </div>` 
         },
-        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Change desktop wallpapers and brightness inside Settings.<br>- Use traffic lights to close, minimize, or maximize apps.<br>- Use Gemini sparkle for quick AI assistance.</p></div>` }
+        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Use the dock icons to open apps or external pages.<br>- Customize display wallpaper and brightness in Settings.</p></div>` }
     };
+
+    function playSong(url, title) {
+        const player = document.getElementById('audio-player');
+        const titleEl = document.getElementById('now-playing-title');
+        if(player && titleEl) {
+            player.src = url;
+            titleEl.innerText = title;
+            player.play();
+        }
+    }
 
     function previewPhoto(url) {
         document.getElementById('preview-img').src = url;
@@ -391,7 +422,12 @@
         w.style.left = '100px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
         w.innerHTML = `<div class="win-bar" onmousedown="sD(event,'${id}')"><div class="traffic-lights"><button class="tb tb-close" onclick="cA('${id}')"></button><button class="tb tb-min" onclick="minA('${id}')"></button><button class="tb tb-max" onclick="tF('${id}')"></button></div><span style="margin:auto; font-size:12px; font-weight:600;">${a.title}</span></div><div class="win-content">${a.content()}</div>`;
         os.appendChild(w); wins[id] = w;
+        
         if(id === 'calendar') rC();
+        if(id === 'notes') {
+            const saved = localStorage.getItem('nextos_notes');
+            if(saved) document.getElementById('notes-input').value = saved;
+        }
         lucide.createIcons();
     }
 
@@ -432,7 +468,7 @@
     window.minA = (id) => wins[id].classList.add('minimized');
     window.cA = (id) => { os.removeChild(wins[id]); delete wins[id]; };
 
-    /* HIGH FPS DRAGGING LOGIC (requestAnimationFrame) */
+    /* HIGH FPS DRAGGING LOGIC */
     let dW = null, oX, oY, mouseX = 0, mouseY = 0, ticking = false;
 
     function sD(e, id) { 

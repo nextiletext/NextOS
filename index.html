@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - by nextile</title>
+    <title>NextOS - by nextile(upd)</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -354,7 +354,12 @@
                     </div>
                 </div>`
         },
-        calc: { title: 'Calculator', w: 280, h: 420, content: () => `<div id="d" style="padding:20px; font-size:40px; text-align:right; height:70px; background:#111;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.2px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333;">${b}</div>`).join('')}</div>` },
+        calc: { 
+            title: 'Calculator', 
+            w: 300, 
+            h: 420, 
+            content: () => `<div id="d" style="padding:20px; font-size:36px; text-align:right; height:70px; background:#111; color:white; overflow:hidden;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/", "7","8","9","*", "4","5","6","-", "1","2","3","+", "0","00",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.5px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333; color:white; font-weight:bold; user-select:none;">${b}</div>`).join('')}</div>` 
+        },
         calendar: { title: 'Calendar', w: 350, h: 420, content: () => `<div id="cal-root"></div>` },
         terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v16.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
         weather: { 
@@ -470,7 +475,7 @@
     function setThemeByIndex(idx) { if (themes[idx]) setTheme(themes[idx].url); }
     function setTheme(url) { if (!url || !url.trim()) return; document.documentElement.style.setProperty('--bg', `url('${url.trim()}')`); }
 
-    /* REAL AI PUBLIC ENGINE (POLLINATIONS) */
+    /* REAL AI PUBLIC ENGINE (POLLINATIONS GET REQUEST) */
     async function sendGeminiMsg() {
         const input = document.getElementById('gemini-in');
         const chat = document.getElementById('gemini-chat');
@@ -514,22 +519,10 @@
         if (lower.includes('lock screen') || lower.includes('lock os')) { lockOS(); return "Locking screen..."; }
         if (lower.includes('clear canvas') || lower.includes('clear paint')) { clearCanvas(); return "Cleared the paint canvas for you!"; }
 
-        // 2. Real Public AI API (Works for everyone, no key required)
+        // 2. Public AI API (CORS-friendly GET request)
         try {
-            const response = await fetch('https://text.pollinations.ai/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: [
-                        { 
-                            role: 'system', 
-                            content: 'You are Nextile AI, the official intelligent assistant inside NextOS. You can help users write code, answer general questions, solve math, and chat. Keep responses clear, helpful, and concise.' 
-                        },
-                        { role: 'user', content: q }
-                    ],
-                    model: 'openai'
-                })
-            });
+            const prompt = `You are Nextile AI, the built-in intelligent assistant inside NextOS. Answer clearly, concisely, and accurately. User question: ${q}`;
+            const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
 
             if (response.ok) {
                 const aiText = await response.text();
@@ -617,7 +610,15 @@
     }
 
     window.cD = (d) => { viewDate.setMonth(viewDate.getMonth()+d); rC(); };
-    window.hC = (b) => { const d = document.getElementById('d'); if(b==="C") calcVal=""; else if(b==="=") {try{calcVal=eval(calcVal).toString()}catch{calcVal="Error"}} else calcVal+=b; d.innerText = calcVal||"0"; };
+    window.hC = (b) => { 
+        const d = document.getElementById('d'); 
+        if(b === "C") calcVal = ""; 
+        else if(b === "±") { if(calcVal) calcVal = (parseFloat(calcVal) * -1).toString(); }
+        else if(b === "%") { if(calcVal) calcVal = (parseFloat(calcVal) / 100).toString(); }
+        else if(b === "=") { try{ calcVal = eval(calcVal).toString(); }catch{ calcVal = "Error"; } } 
+        else calcVal += b; 
+        d.innerText = calcVal || "0"; 
+    };
     
     window.tF = (id) => {
         const w = wins[id];

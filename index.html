@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - nextile</title>
+    <title>NextOS - Unified Drag Logic</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -13,7 +13,7 @@
         body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; }
         #os { width: 100%; height: 100%; position: relative; background: #0d1f3c var(--bg) center/cover; transition: background 0.2s ease; filter: brightness(var(--brightness)); display: none; }
 
-        /* Prevent pointer events on iframes during drag operations */
+        /* Disable pointer events during drag ops */
         body.dragging iframe {
             pointer-events: none !important;
         }
@@ -367,7 +367,7 @@
 
         folderEl.setAttribute('ondblclick', `openFolderWindow('${defaultName}')`);
         folderEl.setAttribute('oncontextmenu', `showFolderContext(event, '${folderId}')`);
-        folderEl.setAttribute('onmousedown', `makeFolderDraggable(event, '${folderId}')`);
+        folderEl.setAttribute('onmousedown', `sDF(event, '${folderId}')`);
 
         const iconType = isZip ? 'file-archive' : 'folder';
 
@@ -380,35 +380,76 @@
         lucide.createIcons();
     }
 
-    function makeFolderDraggable(e, folderId) {
-        if (e.button !== 0) return;
-        const folder = document.getElementById(folderId);
-        let shiftX = e.clientX - folder.getBoundingClientRect().left;
-        let shiftY = e.clientY - folder.getBoundingClientRect().top;
+    /* UNIFIED DRAGGING SYSTEM FOR WINDOWS AND FOLDERS */
+    let activeDragItem = null, activeDragType = null, dragOffsetX = 0, dragOffsetY = 0;
 
-        function moveAt(pageX, pageY) {
+    function sD(e, id) { 
+        if(e.button !== 0) return;
+        const targetWin = wins[id];
+        if(!targetWin || targetWin.classList.contains('fullscreen')) return; 
+        
+        activeDragItem = targetWin; 
+        activeDragType = 'window';
+        document.body.classList.add('dragging');
+        activeDragItem.style.zIndex = ++zIndex; 
+        
+        const rect = activeDragItem.getBoundingClientRect();
+        dragOffsetX = e.clientX - rect.left; 
+        dragOffsetY = e.clientY - rect.top; 
+        
+        if (apps[id]) {
+            document.getElementById('active-app-name').innerText = apps[id].title; 
+        }
+    }
+
+    function sDF(e, folderId) {
+        if (e.button !== 0 || e.target.getAttribute('contenteditable') === 'true') return;
+        const folder = document.getElementById(folderId);
+        if (!folder) return;
+
+        activeDragItem = folder;
+        activeDragType = 'folder';
+        document.body.classList.add('dragging');
+
+        const rect = folder.getBoundingClientRect();
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+    }
+
+    document.onmousemove = (e) => { 
+        if (!activeDragItem) return;
+
+        if (activeDragType === 'window') {
+            let newLeft = e.clientX - dragOffsetX;
+            let newTop = e.clientY - dragOffsetY;
+            
+            const maxLeft = window.innerWidth - 50;
+            const maxTop = window.innerHeight - 50;
+            
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(28, Math.min(newTop, maxTop));
+            
+            activeDragItem.style.left = newLeft + 'px';
+            activeDragItem.style.top = newTop + 'px';
+        } 
+        else if (activeDragType === 'folder') {
             const desktop = document.getElementById('desktop').getBoundingClientRect();
-            let newLeft = pageX - shiftX - desktop.left;
-            let newTop = pageY - shiftY - desktop.top;
+            let newLeft = e.clientX - dragOffsetX - desktop.left;
+            let newTop = e.clientY - dragOffsetY - desktop.top;
 
             newLeft = Math.max(0, Math.min(newLeft, desktop.width - 80));
             newTop = Math.max(0, Math.min(newTop, desktop.height - 80));
 
-            folder.style.left = newLeft + 'px';
-            folder.style.top = newTop + 'px';
+            activeDragItem.style.left = newLeft + 'px';
+            activeDragItem.style.top = newTop + 'px';
         }
+    };
 
-        function onMouseMove(event) {
-            moveAt(event.pageX, event.pageY);
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-
-        document.onmouseup = function() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.onmouseup = null;
-        };
-    }
+    document.onmouseup = () => {
+        activeDragItem = null;
+        activeDragType = null;
+        document.body.classList.remove('dragging');
+    };
 
     function showFolderContext(e, folderId) {
         e.preventDefault();
@@ -893,48 +934,6 @@
             os.removeChild(wins[id]); 
             delete wins[id]; 
         }
-    };
-
-    /* DRAGGING WINDOWS */
-    let dW = null, oX = 0, oY = 0;
-
-    function sD(e, id) { 
-        if(e.button !== 0) return;
-        const targetWin = wins[id];
-        if(!targetWin || targetWin.classList.contains('fullscreen')) return; 
-        
-        dW = targetWin; 
-        document.body.classList.add('dragging');
-        dW.style.zIndex = ++zIndex; 
-        
-        const rect = dW.getBoundingClientRect();
-        oX = e.clientX - rect.left; 
-        oY = e.clientY - rect.top; 
-        
-        if (apps[id]) {
-            document.getElementById('active-app-name').innerText = apps[id].title; 
-        }
-    }
-
-    document.onmousemove = (e) => { 
-        if(dW) { 
-            let newLeft = e.clientX - oX;
-            let newTop = e.clientY - oY;
-            
-            const maxLeft = window.innerWidth - 50;
-            const maxTop = window.innerHeight - 50;
-            
-            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-            newTop = Math.max(28, Math.min(newTop, maxTop));
-            
-            dW.style.left = newLeft + 'px';
-            dW.style.top = newTop + 'px';
-        } 
-    };
-
-    document.onmouseup = () => {
-        dW = null;
-        document.body.classList.remove('dragging');
     };
 
     setInterval(() => { 

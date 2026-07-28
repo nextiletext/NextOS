@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - project</title>
+    <title>NextOS - by nextile</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -22,25 +22,21 @@
         #desktop {
             position: absolute;
             inset: 28px 0 70px 0;
-            display: flex;
-            flex-direction: column;
-            flex-wrap: wrap;
-            align-content: flex-start;
-            gap: 15px;
-            padding: 20px;
             z-index: 1;
         }
 
         .desktop-folder {
             width: 80px;
+            position: absolute;
             display: flex;
             flex-direction: column;
             align-items: center;
-            cursor: pointer;
+            cursor: move;
             color: white;
             text-shadow: 0 1px 3px rgba(0,0,0,0.8);
             border-radius: 8px;
             padding: 8px 4px;
+            user-select: none;
         }
 
         .desktop-folder:hover {
@@ -51,6 +47,7 @@
             width: 42px;
             height: 42px;
             color: #5AC8FA;
+            pointer-events: none;
         }
 
         .desktop-folder span {
@@ -58,6 +55,16 @@
             text-align: center;
             margin-top: 4px;
             word-break: break-word;
+            outline: none;
+        }
+
+        .desktop-folder span[contenteditable="true"] {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #007aff;
+            border-radius: 3px;
+            padding: 1px 4px;
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         /* LOCK SCREEN */
@@ -185,6 +192,14 @@
         <div class="drop-item" onclick="openApp('settings')">Change Wallpaper</div>
     </div>
 
+    <div id="folder-context-menu" class="dropdown" style="position: absolute; z-index: 15000;">
+        <div class="drop-item" onclick="openFolderFromContext()">Open</div>
+        <div class="drop-item" onclick="renameFolderFromContext()">Rename</div>
+        <div class="drop-item" onclick="compressFolderFromContext()">Compress (Zip)</div>
+        <div class="drop-item" onclick="extractFolderFromContext()">Extract All</div>
+        <div class="drop-item" style="color: #ff3b30;" onclick="deleteFolderFromContext()">Delete</div>
+    </div>
+
     <div id="menubar">
         <div class="m-menu-wrapper">
             <div class="apple-logo" onclick="event.stopPropagation(); toggleMenu('apple-dropdown')"><i data-lucide="apple" style="width:16px;"></i></div>
@@ -270,7 +285,8 @@
 
 <script>
     const os = document.getElementById('os'), lock = document.getElementById('lock-screen');
-    let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "", folderCount = 0;
+    let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
+    let folderCount = 0, selectedFolderId = null;
     const today = new Date();
 
     function playMacStartupChime() {
@@ -317,7 +333,7 @@
         { name: "Acoustic Breeze", url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" }
     ];
 
-    /* DESKTOP RIGHT CLICK MENU & FOLDER MANAGEMENT */
+    /* DESKTOP CONTEXT MENU & FOLDERS */
     function showContextMenu(e) {
         if (e.target.id === 'desktop' || e.target.id === 'os') {
             e.preventDefault();
@@ -331,23 +347,33 @@
 
     function closeContextMenu() {
         document.getElementById('context-menu').classList.remove('active');
+        const fMenu = document.getElementById('folder-context-menu');
+        if (fMenu) fMenu.classList.remove('active');
     }
 
-    function createNewFolder() {
+    function createNewFolder(name = null, isZip = false) {
         closeContextMenu();
         folderCount++;
         const folderId = 'folder-' + Date.now();
-        const defaultName = 'New Folder ' + folderCount;
+        const defaultName = name || (isZip ? `Archive_${folderCount}.zip` : `New Folder ${folderCount}`);
 
         const desktop = document.getElementById('desktop');
         const folderEl = document.createElement('div');
         folderEl.className = 'desktop-folder';
         folderEl.id = folderId;
+
+        const offset = (folderCount - 1) * 90;
+        folderEl.style.left = (20 + Math.floor(offset / 500) * 90) + 'px';
+        folderEl.style.top = (20 + (offset % 500)) + 'px';
+
         folderEl.setAttribute('ondblclick', `openFolderWindow('${defaultName}')`);
         folderEl.setAttribute('oncontextmenu', `showFolderContext(event, '${folderId}')`);
+        folderEl.setAttribute('onmousedown', `makeFolderDraggable(event, '${folderId}')`);
+
+        const iconType = isZip ? 'file-archive' : 'folder';
 
         folderEl.innerHTML = `
-            <i data-lucide="folder"></i>
+            <i data-lucide="${iconType}"></i>
             <span id="name-${folderId}">${defaultName}</span>
         `;
 
@@ -355,18 +381,97 @@
         lucide.createIcons();
     }
 
+    function makeFolderDraggable(e, folderId) {
+        if (e.button !== 0) return;
+        const folder = document.getElementById(folderId);
+        let shiftX = e.clientX - folder.getBoundingClientRect().left;
+        let shiftY = e.clientY - folder.getBoundingClientRect().top;
+
+        function moveAt(pageX, pageY) {
+            const desktop = document.getElementById('desktop').getBoundingClientRect();
+            let newLeft = pageX - shiftX - desktop.left;
+            let newTop = pageY - shiftY - desktop.top;
+
+            newLeft = Math.max(0, Math.min(newLeft, desktop.width - 80));
+            newTop = Math.max(0, Math.min(newTop, desktop.height - 80));
+
+            folder.style.left = newLeft + 'px';
+            folder.style.top = newTop + 'px';
+        }
+
+        function onMouseMove(event) {
+            moveAt(event.pageX, event.pageY);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+
+        document.onmouseup = function() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.onmouseup = null;
+        };
+    }
+
     function showFolderContext(e, folderId) {
         e.preventDefault();
         e.stopPropagation();
-        
-        const nameSpan = document.getElementById(`name-${folderId}`);
-        const action = prompt("Folder Options:\n1. Type a new name to rename\n2. Type 'DELETE' to remove folder", nameSpan.innerText);
+        closeAllMenus();
 
-        if (action === 'DELETE') {
-            document.getElementById(folderId).remove();
-        } else if (action && action.trim() !== '') {
-            nameSpan.innerText = action.trim();
-        }
+        selectedFolderId = folderId;
+        const menu = document.getElementById('folder-context-menu');
+        menu.style.left = e.clientX + 'px';
+        menu.style.top = e.clientY + 'px';
+        menu.classList.add('active');
+    }
+
+    function openFolderFromContext() {
+        if (!selectedFolderId) return;
+        const nameSpan = document.getElementById(`name-${selectedFolderId}`);
+        openFolderWindow(nameSpan.innerText);
+        closeContextMenu();
+    }
+
+    function renameFolderFromContext() {
+        if (!selectedFolderId) return;
+        const nameSpan = document.getElementById(`name-${selectedFolderId}`);
+        closeContextMenu();
+
+        nameSpan.contentEditable = "true";
+        nameSpan.focus();
+
+        const range = document.createRange();
+        range.selectNodeContents(nameSpan);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        nameSpan.onkeydown = function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                nameSpan.contentEditable = "false";
+            }
+        };
+    }
+
+    function compressFolderFromContext() {
+        if (!selectedFolderId) return;
+        const nameSpan = document.getElementById(`name-${selectedFolderId}`);
+        createNewFolder(`${nameSpan.innerText}.zip`, true);
+        closeContextMenu();
+    }
+
+    function extractFolderFromContext() {
+        if (!selectedFolderId) return;
+        const nameSpan = document.getElementById(`name-${selectedFolderId}`);
+        let cleanName = nameSpan.innerText.replace('.zip', '') + '_extracted';
+        createNewFolder(cleanName, false);
+        closeContextMenu();
+    }
+
+    function deleteFolderFromContext() {
+        if (!selectedFolderId) return;
+        const folderEl = document.getElementById(selectedFolderId);
+        if (folderEl) folderEl.remove();
+        closeContextMenu();
     }
 
     function openFolderWindow(title) {
@@ -506,7 +611,7 @@
                     </div>
                 </div>` 
         },
-        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Right click on the desktop to create new folders.<br>- Use the dock icons to open apps or external pages.<br>- Customize display wallpaper and brightness in Settings.</p></div>` }
+        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Right click on desktop/folders for contextual menus.<br>- Drag icons to position them freely.<br>- Double click folders to open their window contents.</p></div>` }
     };
 
     function initPaint() {
@@ -515,7 +620,6 @@
         const ctx = canvas.getContext('2d');
         
         const rect = canvas.getBoundingClientRect();
-        
         let tempCanvas = null;
         if (canvas.width > 0 && canvas.height > 0) {
             tempCanvas = document.createElement('canvas');
@@ -602,7 +706,6 @@
     function setThemeByIndex(idx) { if (themes[idx]) setTheme(themes[idx].url); }
     function setTheme(url) { if (!url || !url.trim()) return; document.documentElement.style.setProperty('--bg', `url('${url.trim()}')`); }
 
-    /* ASSISTANT CHAT ENGINE */
     async function sendAssistantMsg() {
         const input = document.getElementById('assistant-in');
         const chat = document.getElementById('assistant-chat');
@@ -632,8 +735,7 @@
     async function processAssistant(q) {
         const lower = q.toLowerCase().trim();
 
-        // 1. Local OS Commands
-        if (lower.includes('open paint')) { openApp('paint'); return "Opening Paint for you!"; }
+        if (lower.includes('open paint')) { openApp('paint'); return "Opening Paint!"; }
         if (lower.includes('open safari') || lower.includes('open browser')) { openApp('browser'); return "Opening Safari!"; }
         if (lower.includes('open notes')) { openApp('notes'); return "Opening Notes!"; }
         if (lower.includes('open music')) { openApp('music'); return "Opening Music Player!"; }
@@ -644,9 +746,7 @@
         if (lower.includes('open weather')) { openApp('weather'); return "Opening Weather App!"; }
         if (lower.includes('open settings')) { openApp('settings'); return "Opening System Settings!"; }
         if (lower.includes('lock screen') || lower.includes('lock os')) { lockOS(); return "Locking screen..."; }
-        if (lower.includes('clear canvas') || lower.includes('clear paint')) { clearCanvas(); return "Cleared the paint canvas for you!"; }
 
-        // 2. Time & Date Utility
         if (lower.includes('time') || lower.includes('clock')) {
             const now = new Date();
             return `The current system time is <b>${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</b>.`;
@@ -656,15 +756,6 @@
             return `Today is <b>${now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</b>.`;
         }
 
-        // 3. Conversational Basics
-        if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-            return "Hello! I am your <b>Assistant</b>. Ask me for the time, date, math problems, or search Wikipedia knowledge!";
-        }
-        if (lower.includes('who are you') || lower.includes('your name')) {
-            return "I am <b>Assistant</b>, your built-in NextOS system utility.";
-        }
-
-        // 4. Quick Math Evaluator
         const mathExpression = q.replace(/calc|calculate|what is|evaluate|compute|\?/gi, '').trim();
         if (/^[0-9+\-*/\s().]+$/.test(mathExpression) && mathExpression.length > 0) {
             try {
@@ -673,7 +764,6 @@
             } catch (e) {}
         }
 
-        // 5. Open Wikipedia Knowledge Base Lookup
         try {
             const queryTerm = q.replace(/what is|who is|tell me about|search|where is|define/gi, '').trim();
             if (queryTerm) {
@@ -685,11 +775,9 @@
                     }
                 }
             }
-        } catch (err) {
-            console.error("Wiki Knowledge Error:", err);
-        }
+        } catch (err) {}
 
-        return "I couldn't find a direct match. Try asking <i>'what time is it'</i>, <i>'open paint'</i>, or searching a topic like <i>'what is Photosynthesis'</i>!";
+        return "Try asking me <i>'what time is it'</i>, <i>'open paint'</i>, or <i>'what is Mars'</i>!";
     }
 
     function unlock() { 
@@ -803,7 +891,7 @@
     window.minA = (id) => wins[id].classList.add('minimized');
     window.cA = (id) => { os.removeChild(wins[id]); delete wins[id]; };
 
-    /* HIGH FPS DRAGGING LOGIC */
+    /* DRAGGING WINDOWS */
     let dW = null, oX, oY, mouseX = 0, mouseY = 0, ticking = false;
 
     function sD(e, id) { 

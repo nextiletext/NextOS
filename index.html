@@ -2,905 +2,381 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextOS</title>
+    <title>NextOS - Unified Drag Logic & Finder</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root {
-            --bg: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
-            --brightness: 1;
+        :root { 
+            --bg: url('https://cdn.discordapp.com/attachments/1490821953358135490/1493679242230104235/NextOS_wallpaper.png?ex=69dfd8b2&is=69de8732&hm=5e463232114b4fab3c4d65a07420822a271d5d3a5d1998f8472862886a915221&'); 
+            --brightness: 1; 
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-user-select: none; user-select: none; }
+        body, html { width: 100vw; height: 100vh; overflow: hidden; background: #000; }
+        #os { width: 100%; height: 100%; position: relative; background: #0d1f3c var(--bg) center/cover; transition: background 0.2s ease; filter: brightness(var(--brightness)); display: none; }
+
+        body.dragging iframe { pointer-events: none !important; }
+
+        #desktop { position: absolute; inset: 28px 0 70px 0; z-index: 1; }
+
+        .desktop-folder {
+            width: 80px; position: absolute; display: flex; flex-direction: column; align-items: center;
+            cursor: move; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8); border-radius: 8px; padding: 8px 4px;
+        }
+        .desktop-folder:hover { background: rgba(255, 255, 255, 0.15); }
+        .desktop-folder i { width: 42px; height: 42px; color: #5AC8FA; pointer-events: none; }
+        .desktop-folder span { font-size: 11px; text-align: center; margin-top: 4px; word-break: break-word; outline: none; }
+        .desktop-folder span[contenteditable="true"] {
+            background: rgba(0, 0, 0, 0.6); border: 1px solid #007aff; border-radius: 3px; padding: 1px 4px;
+            -webkit-user-select: text; user-select: text;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
+        #lock-screen { position: fixed; inset: 0; z-index: 20000; background: var(--bg) center/cover; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.3s ease-out; }
+        #lock-screen.unlocked { transform: translateY(-100%); }
+        .lock-blur { position: absolute; inset: 0; background: rgba(0,0,0,0.55); z-index: -1; }
+        #lock-time { font-size: 100px; color: white; font-weight: 200; }
+        #pass-box { 
+            margin-top: 20px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 12px 30px; 
+            border-radius: 25px; color: white; text-align: center; outline: none; min-width: 220px; cursor: text;
+            -webkit-user-select: text; user-select: text; -webkit-text-security: disc; text-security: disc;
         }
+        #pass-box:empty:before { content: attr(data-placeholder); color: rgba(255,255,255,0.6); -webkit-text-security: none; text-security: none; }
 
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #000;
+        #menubar { position: absolute; top: 0; width: 100%; height: 28px; background: rgba(20, 20, 25, 0.92); display: flex; align-items: center; padding: 0 15px; z-index: 10000; border-bottom: 0.5px solid rgba(255, 255, 255, 0.1); color: white; font-size: 13px; }
+        .apple-logo { cursor: pointer; display: flex; align-items: center; padding: 0 10px; margin-left: -10px; height: 100%; position: relative; }
+        .dropdown { position: absolute; top: 28px; left: 0; width: 180px; background: rgba(35, 35, 40, 0.98); border-radius: 6px; border: 0.5px solid rgba(255,255,255,0.1); padding: 5px; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10001; }
+        .dropdown.active { display: block; }
+        .drop-item { padding: 5px 12px; border-radius: 4px; font-size: 13px; color: white; cursor: pointer; }
+        .drop-item:hover { background: #007aff; }
+        .m-menu-wrapper { position: relative; display: inline-block; }
+        .gemini-btn { display: flex; align-items: center; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: background 0.2s; }
+        .gemini-btn:hover { background: rgba(255,255,255,0.15); }
+        .m-item { margin-left: 10px; opacity: 0.9; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+        .m-item:hover { background: rgba(255,255,255,0.15); opacity: 1; }
+        .m-bold { font-weight: 700; margin-left: 10px; }
+
+        .win { 
+            position: absolute; border-radius: 12px; overflow: hidden; background: rgba(26, 26, 30, 0.98); 
+            border: 0.5px solid rgba(255, 255, 255, 0.2); box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
+            display: flex; flex-direction: column; transition: opacity 0.15s ease-out; contain: layout paint; will-change: left, top;
         }
+        .win.minimized { transform: scale(0) translateY(800px) !important; opacity: 0; pointer-events: none; }
+        .win.fullscreen { width: 100vw !important; height: calc(100vh - 28px) !important; top: 28px !important; left: 0 !important; border-radius: 0; }
+        .win-bar { height: 38px; display: flex; align-items: center; padding: 0 12px; cursor: move; background: rgba(255, 255, 255, 0.05); }
+        .traffic-lights { display: flex; gap: 8px; margin-right: 15px; }
+        .tb { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; color: transparent; font-weight: bold; }
+        .win-bar:hover .tb { color: rgba(0,0,0,0.6); }
+        .tb-close { background: #ff5f57; } .tb-close::before { content: '×'; }
+        .tb-min { background: #febc2e; } .tb-min::before { content: '−'; }
+        .tb-max { background: #28c840; } .tb-max::before { content: '⤢'; }
 
-        /* Filter wrapper for display brightness control */
-        #os-root {
-            width: 100%;
-            height: 100%;
-            filter: brightness(var(--brightness));
-        }
+        .browser-nav { display: flex; align-items: center; padding: 8px; background: #2c2c2e; gap: 12px; }
+        .browser-url { flex: 1; background: #1c1c1e; border: none; border-radius: 6px; padding: 6px 12px; color: white; outline: none; font-size: 13px; }
 
-        /* LOCK SCREEN */
-        #lock-screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: var(--bg);
-            background-size: cover;
-            background-position: center;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+        #dock-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); padding: 8px; background: rgba(255, 255, 255, 0.12); border-radius: 20px; z-index: 9999; border: 0.5px solid rgba(255, 255, 255, 0.25); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+        #dock { display: flex; gap: 12px; }
+        .dk { width: 52px; height: 52px; border-radius: 13px; cursor: pointer; transition: transform 0.1s ease, background 0.15s ease; display: flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,0.18); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .dk:hover { transform: scale(1.15) translateY(-4px); background: rgba(255,255,255,0.35); }
 
-        #lock-screen.unlocked {
-            transform: translateY(-100%);
-        }
+        .win-content { flex: 1; overflow-y: auto; background: #1c1c1e; color: white; contain: strict; }
 
-        .lock-clock {
-            font-size: 80px;
-            font-weight: 200;
-            margin-bottom: 20px;
-            text-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
+        /* FINDER CUSTOM STYLING */
+        .finder-container { display: flex; height: 100%; width: 100%; background: #1e1e22; color: #fff; font-size: 13px; }
+        .finder-sidebar { width: 180px; background: rgba(35, 35, 42, 0.7); border-right: 1px solid rgba(255,255,255,0.08); padding: 12px 8px; display: flex; flex-direction: column; gap: 15px; }
+        .finder-group-title { font-size: 11px; font-weight: 700; color: #8e8e93; text-transform: uppercase; padding-left: 8px; margin-bottom: 4px; }
+        .finder-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; color: #d1d1d6; }
+        .finder-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .finder-item.active { background: #007aff; color: #fff; }
+        .finder-item i { width: 16px; height: 16px; color: #5ac8fa; }
+        .finder-item.active i { color: #fff; }
+        .finder-main { flex: 1; display: flex; flex-direction: column; background: #18181c; }
+        .finder-toolbar { height: 40px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; padding: 0 12px; gap: 12px; background: rgba(30, 30, 35, 0.9); }
+        .finder-nav-btn { background: none; border: none; color: #8e8e93; cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; }
+        .finder-nav-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .finder-path { font-weight: 600; font-size: 13px; }
+        .finder-search { margin-left: auto; background: rgba(255,255,255,0.1); border: none; border-radius: 6px; padding: 4px 8px; color: white; outline: none; font-size: 12px; width: 140px; }
+        .finder-view { flex: 1; padding: 15px; overflow-y: auto; }
+        .finder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 15px; }
+        .finder-file { display: flex; flex-direction: column; align-items: center; padding: 8px; border-radius: 8px; cursor: pointer; gap: 6px; text-align: center; }
+        .finder-file:hover { background: rgba(255,255,255,0.1); }
+        .finder-file i { width: 44px; height: 44px; color: #5ac8fa; }
+        .finder-file span { font-size: 12px; word-break: break-word; }
 
-        .pin-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 20px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
+        .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+        .theme-card { height: 60px; border-radius: 8px; background-size: cover; background-position: center; border: 2px solid transparent; cursor: pointer; display: flex; align-items: flex-end; padding: 5px; font-size: 11px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        .theme-card:hover { border-color: #007aff; }
 
-        .pin-dots {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            height: 15px;
-        }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding: 15px; }
+        .photo-card { height: 110px; border-radius: 8px; background-size: cover; background-position: center; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; border: 1px solid rgba(255,255,255,0.1); }
+        .photo-card:hover { transform: scale(1.04); box-shadow: 0 6px 15px rgba(0,0,0,0.5); }
+        .photo-preview { position: absolute; inset: 0; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 15px; }
+        .photo-preview.active { display: flex; }
+        .photo-preview img { max-width: 100%; max-height: 80%; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .photo-close-btn { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; }
 
-        .pin-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 1.5px solid white;
-            transition: background 0.2s;
-        }
+        .track-item { padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.05); margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .track-item:hover { background: rgba(255,255,255,0.15); }
 
-        .pin-dot.filled {
-            background: white;
-        }
-
-        .numpad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .num-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            font-size: 18px;
-            font-weight: 500;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: background 0.2s;
-        }
-
-        .num-btn:active {
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        /* OS ENVIRONMENT */
-        #os {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: var(--bg);
-            background-size: cover;
-            background-position: center;
-            display: none;
-        }
-
-        /* TOP MENUBAR */
-        #menubar {
-            height: 28px;
-            background: rgba(20, 20, 25, 0.4);
-            backdrop-filter: blur(25px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 12px;
-            color: white;
-            font-size: 13px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 9000;
-            position: relative;
-        }
-
-        .menu-left, .menu-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .menu-item {
-            cursor: pointer;
-            padding: 2px 6px;
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .menu-item:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* DROPDOWNS */
-        .dropdown {
-            position: absolute;
-            top: 28px;
-            left: 0;
-            background: rgba(30, 30, 35, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
-            padding: 5px;
-            display: none;
-            flex-direction: column;
-            min-width: 160px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            z-index: 9001;
-        }
-
-        .dropdown.active {
-            display: flex;
-        }
-
-        .dropdown-item {
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            color: #eee;
-        }
-
-        .dropdown-item:hover {
-            background: #007aff;
-            color: white;
-        }
-
-        .dropdown-divider {
-            height: 1px;
-            background: rgba(255,255,255,0.1);
-            margin: 4px 0;
-        }
-
-        /* DESKTOP & FOLDERS */
-        #desktop {
-            position: absolute;
-            top: 28px;
-            left: 0;
-            right: 0;
-            bottom: 70px;
-            padding: 20px;
-        }
-
-        .folder-icon {
-            width: 80px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: absolute;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid transparent;
-        }
-
-        .folder-icon:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .folder-icon i {
-            color: #48b2ff;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-        }
-
-        .folder-name {
-            color: white;
-            font-size: 11px;
-            margin-top: 4px;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-            text-align: center;
-            word-break: break-all;
-            outline: none;
-        }
-
-        /* CONTEXT MENU */
-        #context-menu {
-            position: absolute;
-            background: rgba(30, 30, 35, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
-            padding: 5px;
-            display: none;
-            flex-direction: column;
-            min-width: 150px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            z-index: 9500;
-        }
-
-        /* DOCK */
-        #dock-container {
-            position: absolute;
-            bottom: 10px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            z-index: 9000;
-        }
-
-        #dock {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 8px 12px;
-            border-radius: 20px;
-            display: flex;
-            gap: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        .dock-app {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            color: white;
-            position: relative;
-        }
-
-        .dock-app:hover {
-            transform: scale(1.2) translateY(-8px);
-        }
-
-        /* WINDOWS */
-        .win {
-            position: absolute;
-            background: rgba(25, 25, 30, 0.85);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-width: 250px;
-            min-height: 150px;
-        }
-
-        .win.minimized {
-            display: none !important;
-        }
-
-        .win.fullscreen {
-            top: 28px !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: calc(100% - 28px) !important;
-            border-radius: 0;
-        }
-
-        .win-bar {
-            height: 38px;
-            background: rgba(255,255,255,0.05);
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            cursor: move;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .traffic-lights {
-            display: flex;
-            gap: 8px;
-        }
-
-        .tb {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-        }
-
-        .tb-close { background: #ff5f56; }
-        .tb-min { background: #ffbd2e; }
-        .tb-max { background: #27c93f; }
-
-        .win-content {
-            flex: 1;
-            overflow: auto;
-            color: white;
-            position: relative;
-        }
-
-        /* APP STYLES */
-        .theme-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .theme-card {
-            height: 70px;
-            border-radius: 8px;
-            background-size: cover;
-            background-position: center;
-            cursor: pointer;
-            border: 2px solid transparent;
-            display: flex;
-            align-items: flex-end;
-            padding: 6px;
-        }
-
-        .theme-card:hover {
-            border-color: #007aff;
-        }
-
-        .theme-card span {
-            font-size: 11px;
-            background: rgba(0,0,0,0.6);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .browser-nav {
-            display: flex;
-            gap: 8px;
-            padding: 8px;
-            background: #1c1c1e;
-            align-items: center;
-        }
-
-        .browser-url {
-            flex: 1;
-            background: #2c2c2e;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 12px;
-            color: white;
-            outline: none;
-            font-size: 12px;
-        }
-
-        .track-item {
-            padding: 8px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .track-item:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            padding: 10px;
-        }
-
-        .photo-card {
-            aspect-ratio: 1;
-            background-size: cover;
-            background-position: center;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .photo-card:hover {
-            transform: scale(1.03);
-        }
-
-        .photo-preview {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 10;
-        }
-
-        .photo-preview.active {
-            display: flex;
-        }
-
-        .photo-preview img {
-            max-width: 100%;
-            max-height: 80%;
-            border-radius: 8px;
-            object-fit: contain;
-        }
-
-        .photo-close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .paint-toolbar {
-            display: flex;
-            gap: 10px;
-            padding: 8px;
-            background: #2a2a30;
-            align-items: center;
-        }
-
-        .paint-btn {
-            background: #3a3a42;
-            border: none;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        /* FINDER APP STYLES */
-        .finder-nav-item {
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            color: #ccc;
-            transition: background 0.15s, color 0.15s;
-        }
-
-        .finder-nav-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .finder-nav-item.active {
-            background: #007aff;
-            color: white;
-            font-weight: 500;
-        }
-
-        .finder-file-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
+        .paint-toolbar { display: flex; gap: 10px; align-items: center; padding: 8px; background: #2c2c2e; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .paint-btn { padding: 4px 8px; background: #007aff; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px; }
     </style>
 </head>
-<body>
+<body onclick="closeAllMenus(); closeContextMenu();">
 
-<div id="os-root">
-    <div id="lock-screen">
-        <div class="lock-clock" id="lock-time">12:00 PM</div>
-        <div class="pin-container">
-            <span style="font-size: 13px; color: #ccc;">Enter Passcode (1234)</span>
-            <div class="pin-dots">
-                <div class="pin-dot" id="dot-0"></div>
-                <div class="pin-dot" id="dot-1"></div>
-                <div class="pin-dot" id="dot-2"></div>
-                <div class="pin-dot" id="dot-3"></div>
-            </div>
-            <div class="numpad">
-                <button class="num-btn" onclick="pressNum('1')">1</button>
-                <button class="num-btn" onclick="pressNum('2')">2</button>
-                <button class="num-btn" onclick="pressNum('3')">3</button>
-                <button class="num-btn" onclick="pressNum('4')">4</button>
-                <button class="num-btn" onclick="pressNum('5')">5</button>
-                <button class="num-btn" onclick="pressNum('6')">6</button>
-                <button class="num-btn" onclick="pressNum('7')">7</button>
-                <button class="num-btn" onclick="pressNum('8')">8</button>
-                <button class="num-btn" onclick="pressNum('9')">9</button>
-                <button class="num-btn" onclick="clearPin()">C</button>
-                <button class="num-btn" onclick="pressNum('0')">0</button>
-                <button class="num-btn" onclick="backspacePin()">←</button>
-            </div>
-            <div id="pass-box" style="color:#ff453a; font-size:12px; min-height:15px; margin-top:5px;"></div>
-        </div>
+<div id="lock-screen">
+    <div class="lock-blur"></div>
+    <div id="lock-time">00:00 AM</div>
+    <div id="pass-box" contenteditable="true" data-placeholder="Enter Password" onkeydown="if(event.key==='Enter'){ event.preventDefault(); unlock(); }"></div>
+</div>
+
+<div id="os">
+    <div id="desktop" onclick="closeContextMenu()" oncontextmenu="showContextMenu(event)"></div>
+
+    <div id="context-menu" class="dropdown" style="position: absolute; z-index: 15000;">
+        <div class="drop-item" onclick="createNewFolder()">New Folder</div>
+        <div class="drop-item" onclick="openApp('finder')">Open Finder</div>
+        <div class="drop-item" onclick="openApp('settings')">Change Wallpaper</div>
     </div>
 
-    <div id="os">
-        <div id="menubar">
-            <div class="menu-left">
-                <div class="menu-item" onclick="toggleMenu('apple-menu')">
-                    <i data-lucide="apple" style="width: 14px; height: 14px;"></i>
-                    <div class="dropdown" id="apple-menu">
-                        <div class="dropdown-item" onclick="alert('NextOS v16.0 - Built for Web')">About This Mac</div>
-                        <div class="dropdown-divider"></div>
-                        <div class="dropdown-item" onclick="openApp('settings')">System Settings...</div>
-                        <div class="dropdown-divider"></div>
-                        <div class="dropdown-item" onclick="lockOS()">Lock Screen</div>
-                    </div>
-                </div>
-                <div class="menu-item" onclick="toggleMenu('finder-menu')">
-                    <b>Finder</b>
-                    <div class="dropdown" id="finder-menu">
-                        <div class="dropdown-item" onclick="openApp('finder')">New Finder Window</div>
-                        <div class="dropdown-item" onclick="createNewFolder()">New Folder on Desktop</div>
-                        <div class="dropdown-divider"></div>
-                        <div class="dropdown-item" onclick="minimizeAll()">Hide All Windows</div>
-                        <div class="dropdown-item" onclick="closeAllApps()">Close All Apps</div>
-                    </div>
-                </div>
-                <div class="menu-item" onclick="toggleMenu('view-menu')">
-                    View
-                    <div class="dropdown" id="view-menu">
-                        <div class="dropdown-item" onclick="toggleDarkMode()">Toggle Dark Mode</div>
-                    </div>
-                </div>
-                <div class="menu-item" onclick="openApp('help')">Help</div>
-            </div>
-
-            <div class="menu-right">
-                <i data-lucide="wifi" style="width: 14px; height: 14px;"></i>
-                <i data-lucide="battery" style="width: 14px; height: 14px;"></i>
-                <span id="menubar-date" style="font-size:12px; color:#ddd;"></span>
-                <span id="clock" style="font-weight: 500;">12:00 PM</span>
-            </div>
-        </div>
-
-        <div id="desktop" oncontextmenu="showContextMenu(event)">
-            <div id="context-menu">
-                <div class="dropdown-item" id="ctx-new-folder" onclick="createNewFolder(); closeContextMenu();">New Folder</div>
-                <div class="dropdown-item" id="ctx-rename" onclick="renameFolderFromContext();">Rename</div>
-                <div class="dropdown-item" id="ctx-compress" onclick="compressFolderFromContext();">Compress (.zip)</div>
-                <div class="dropdown-item" id="ctx-extract" onclick="extractFolderFromContext();">Extract Here</div>
-                <div class="dropdown-divider"></div>
-                <div class="dropdown-item" id="ctx-delete" onclick="deleteFolderFromContext();">Delete</div>
-            </div>
-        </div>
-
-        <div id="dock-container">
-            <div id="dock">
-                <div class="dock-app" style="background: linear-gradient(135deg, #1d72b8, #00c6ff);" onclick="openApp('finder')" title="Finder"><i data-lucide="folder-git-2"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #007aff, #0040dd);" onclick="openApp('browser')" title="Safari"><i data-lucide="compass"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #ff9500, #ff5e00);" onclick="openApp('paint')" title="Canvas Paint"><i data-lucide="palette"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #ff2d55, #cc0033);" onclick="openApp('music')" title="Music"><i data-lucide="music"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #34c759, #248a3d);" onclick="openApp('notes')" title="Notes"><i data-lucide="file-text"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #5856d6, #3634a3);" onclick="openApp('photos')" title="Photos"><i data-lucide="image"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #ff3b30, #a01000);" onclick="openApp('calc')" title="Calculator"><i data-lucide="calculator"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #ffcc00, #ff9500);" onclick="openApp('calendar')" title="Calendar"><i data-lucide="calendar"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #5ac8fa, #007aff);" onclick="openApp('weather')" title="Weather"><i data-lucide="cloud-sun"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #333, #111);" onclick="openApp('terminal')" title="Terminal"><i data-lucide="terminal"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #af52de, #7e22ce);" onclick="openApp('assistant')" title="Assistant"><i data-lucide="bot"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #8e8e93, #636366);" onclick="openApp('settings')" title="Settings"><i data-lucide="settings"></i></div>
-                <div class="dock-app" style="background: linear-gradient(135deg, #ff2d55, #007aff);" onclick="openApp('myPage')" title="My Page"><i data-lucide="globe"></i></div>
-            </div>
-        </div>
+    <div id="folder-context-menu" class="dropdown" style="position: absolute; z-index: 15000;">
+        <div class="drop-item" onclick="openFolderFromContext()">Open</div>
+        <div class="drop-item" onclick="renameFolderFromContext()">Rename</div>
+        <div class="drop-item" onclick="compressFolderFromContext()">Compress (Zip)</div>
+        <div class="drop-item" onclick="extractFolderFromContext()">Extract All</div>
+        <div class="drop-item" style="color: #ff3b30;" onclick="deleteFolderFromContext()">Delete</div>
     </div>
+
+    <div id="menubar">
+        <div class="m-menu-wrapper">
+            <div class="apple-logo" onclick="event.stopPropagation(); toggleMenu('apple-dropdown')"><i data-lucide="apple" style="width:16px;"></i></div>
+            <div class="dropdown" id="apple-dropdown">
+                <div class="drop-item" onclick="lockOS()">Lock Screen</div>
+                <div class="drop-item" onclick="openApp('settings')">System Settings...</div>
+            </div>
+        </div>
+
+        <div class="gemini-btn" title="Open Assistant" onclick="openApp('assistant')">
+            <i data-lucide="bot" style="width:17px; height:17px; color:#007aff;"></i>
+        </div>
+
+        <span class="m-bold" id="active-app-name">Finder</span>
+
+        <div class="m-menu-wrapper">
+            <span class="m-item" onclick="event.stopPropagation(); toggleMenu('file-dropdown')">File</span>
+            <div class="dropdown" id="file-dropdown">
+                <div class="drop-item" onclick="createNewFolder()">New Folder</div>
+                <div class="drop-item" onclick="openApp('finder')">New Finder Window</div>
+                <div class="drop-item" onclick="openApp('terminal')">New Terminal Window</div>
+            </div>
+        </div>
+
+        <div class="m-menu-wrapper">
+            <span class="m-item" onclick="event.stopPropagation(); toggleMenu('view-dropdown')">View</span>
+            <div class="dropdown" id="view-dropdown">
+                <div class="drop-item" onclick="toggleDarkMode()">Toggle Theme Accent</div>
+            </div>
+        </div>
+
+        <div class="m-menu-wrapper">
+            <span class="m-item" onclick="event.stopPropagation(); toggleMenu('window-dropdown')">Window</span>
+            <div class="dropdown" id="window-dropdown">
+                <div class="drop-item" onclick="minimizeAll()">Minimize All</div>
+                <div class="drop-item" onclick="closeAllApps()">Close All Windows</div>
+            </div>
+        </div>
+
+        <span id="clock-container" style="margin-left:auto; font-weight:500;">
+            <span id="menubar-date" style="margin-right:10px;"></span>
+            <span id="clock">00:00 AM</span>
+        </span>
+    </div>
+
+    <div id="dock-container"><div id="dock">
+        <div class="dk" title="Finder" onclick="openApp('finder')"><i data-lucide="smile"></i></div>
+        <div class="dk" title="Safari" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
+        <div class="dk" title="Paint" onclick="openApp('paint')"><i data-lucide="palette"></i></div>
+        <div class="dk" title="Notes" onclick="openApp('notes')"><i data-lucide="file-text"></i></div>
+        <div class="dk" title="Music" onclick="openApp('music')"><i data-lucide="music"></i></div>
+        <div class="dk" title="Photos" onclick="openApp('photos')"><i data-lucide="image"></i></div>
+        <div class="dk" title="Calculator" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
+        <div class="dk" title="Calendar" onclick="openApp('calendar')"><i data-lucide="calendar"></i></div>
+        <div class="dk" title="Terminal" onclick="openApp('terminal')"><i data-lucide="terminal"></i></div>
+        <div class="dk" title="Weather" onclick="openApp('weather')"><i data-lucide="cloud-sun"></i></div>
+        <div class="dk" title="Settings" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
+    </div></div>
 </div>
 
 <script>
-    // CORE SYSTEM VARIABLES
-    let pin = "";
-    const correctPin = "1234";
-    let zIndex = 100;
-    let wins = {};
-    let folderCount = 0;
-    let selectedFolderId = null;
-    let draggedElement = null;
-    let dragOffsetX = 0, dragOffsetY = 0;
-    let calcVal = "";
-    let today = new Date();
-    let viewDate = new Date();
+    const os = document.getElementById('os'), lock = document.getElementById('lock-screen');
+    let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
+    let folderCount = 0, selectedFolderId = null;
+    const today = new Date();
 
-    // VIRTUAL FILE SYSTEM FOR FINDER
-    let fileSystem = {
-        desktop: [
-            { id: 'fs_1', name: 'Documents Folder', type: 'folder' },
-            { id: 'fs_2', name: 'Project Notes.txt', type: 'file', content: 'NextOS development notes...' },
-            { id: 'fs_3', name: 'Scenery.jpg', type: 'photo', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600&auto=format&fit=crop' }
+    // Virtual File System State
+    const fileSystem = {
+        'Desktop': [],
+        'Documents': [
+            { name: 'Project_Notes.txt', type: 'file', icon: 'file-text' },
+            { name: 'Financial_Summary.pdf', type: 'file', icon: 'file-spreadsheet' }
         ],
-        documents: [
-            { id: 'fs_4', name: 'Work Resume.pdf', type: 'file', content: 'Resume Details...' },
-            { id: 'fs_5', name: 'Finances', type: 'folder' }
+        'Downloads': [
+            { name: 'NextOS_Installer.dmg', type: 'file', icon: 'disc' },
+            { name: 'Wallpaper_HD.png', type: 'file', icon: 'image' }
         ],
-        downloads: [
-            { id: 'fs_6', name: 'NextOS_installer.dmg', type: 'file' }
+        'Applications': [
+            { name: 'Safari', type: 'app', id: 'browser', icon: 'globe' },
+            { name: 'Paint', type: 'app', id: 'paint', icon: 'palette' },
+            { name: 'Notes', type: 'app', id: 'notes', icon: 'file-text' },
+            { name: 'Music', type: 'app', id: 'music', icon: 'music' },
+            { name: 'Photos', type: 'app', id: 'photos', icon: 'image' }
         ],
-        applications: [
-            { id: 'app_1', name: 'Safari', type: 'app', appId: 'browser', icon: 'compass', color: '#007aff' },
-            { id: 'app_2', name: 'Canvas Paint', type: 'app', appId: 'paint', icon: 'palette', color: '#ff9500' },
-            { id: 'app_3', name: 'Music Player', type: 'app', appId: 'music', icon: 'music', color: '#ff2d55' },
-            { id: 'app_4', name: 'Notes', type: 'app', appId: 'notes', icon: 'file-text', color: '#34c759' },
-            { id: 'app_5', name: 'Photos', type: 'app', appId: 'photos', icon: 'image', color: '#5856d6' },
-            { id: 'app_6', name: 'Calculator', type: 'app', appId: 'calc', icon: 'calculator', color: '#ff3b30' },
-            { id: 'app_7', name: 'Calendar', type: 'app', appId: 'calendar', icon: 'calendar', color: '#ffcc00' },
-            { id: 'app_8', name: 'Weather', type: 'app', appId: 'weather', icon: 'cloud-sun', color: '#5ac8fa' },
-            { id: 'app_9', name: 'Terminal', type: 'app', appId: 'terminal', icon: 'terminal', color: '#333333' },
-            { id: 'app_10', name: 'Assistant', type: 'app', appId: 'assistant', icon: 'bot', color: '#af52de' },
-            { id: 'app_11', name: 'Settings', type: 'app', appId: 'settings', icon: 'settings', color: '#8e8e93' }
-        ],
-        trash: []
+        'Recents': [],
+        'Trash': []
     };
 
-    let finderCurrentPath = 'desktop';
-    let finderHistory = ['desktop'];
-    let finderHistoryIndex = 0;
+    let currentFinderTab = 'Desktop';
 
     function playMacStartupChime() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const now = ctx.currentTime;
-
-            const osc1 = ctx.createOscillator();
-            const osc2 = ctx.createOscillator();
-            const osc3 = ctx.createOscillator();
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const freqs = [92.50, 138.59, 185.00, 233.08, 277.18, 369.99];
+        freqs.forEach(freq => {
+            const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-
-            osc1.type = 'sine';
-            osc2.type = 'sine';
-            osc3.type = 'sine';
-
-            osc1.frequency.setValueAtTime(146.83, now); // D3
-            osc2.frequency.setValueAtTime(220.00, now); // A3
-            osc3.frequency.setValueAtTime(293.66, now); // D4
-
-            gain.gain.setValueAtTime(0, now);
-            gain.gain.linearRampToValueAtTime(0.3, now + 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.5);
-
-            osc1.connect(gain);
-            osc2.connect(gain);
-            osc3.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc1.start(now);
-            osc2.start(now);
-            osc3.start(now);
-
-            osc1.stop(now + 3.6);
-            osc2.stop(now + 3.6);
-            osc3.stop(now + 3.6);
-        } catch (e) {
-            console.log("AudioContext blocked or not supported until direct interaction.");
-        }
+            osc.type = 'triangle'; 
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.08); 
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.8); 
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 3.8);
+        });
     }
 
     const themes = [
-        { name: 'Flow', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop' },
-        { name: 'Ventura', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2564&auto=format&fit=crop' },
-        { name: 'Monterey', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop' },
-        { name: 'Dark Mode', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2564&auto=format&fit=crop' }
-    ];
-
-    const songs = [
-        { name: 'Lofi Chill', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-        { name: 'Acoustic Dreams', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-        { name: 'Ambient Vibe', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' }
+        { name: 'Classic NextOS', url: 'https://cdn.discordapp.com/attachments/1490821953358135490/1493679242230104235/NextOS_wallpaper.png?ex=69dfd8b2&is=69de8732&hm=5e463232114b4fab3c4d65a07420822a271d5d3a5d1998f8472862886a915221&' },
+        { name: 'Dark Abstract', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80' },
+        { name: 'Neon Wave', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1200&q=80' },
+        { name: 'Minimal Mountains', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80' }
     ];
 
     const photosList = [
-        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?q=80&w=600&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1434725039720-aaad6dd32dfe?q=80&w=600&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=600&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=600&auto=format&fit=crop'
+        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80'
     ];
 
-    // PASSCODE LOGIC
-    function pressNum(n) {
-        if (pin.length < 4) {
-            pin += n;
-            updateDots();
-        }
-        if (pin.length === 4) {
-            setTimeout(() => {
-                if (pin === correctPin) {
-                    unlock();
-                } else {
-                    document.getElementById('pass-box').innerText = "Incorrect Passcode";
-                    clearPin();
-                }
-            }, 100);
-        }
-    }
+    const songs = [
+        { name: "Lofi Chill Stream", url: "https://stream.zeno.fm/f3wvbbqmdg8uv" },
+        { name: "Chillhop Beats", url: "https://stream.zeno.fm/0r0xa792kwzuv" }
+    ];
 
-    function updateDots() {
-        for (let i = 0; i < 4; i++) {
-            const dot = document.getElementById(`dot-${i}`);
-            if (i < pin.length) dot.classList.add('filled');
-            else dot.classList.remove('filled');
-        }
-    }
-
-    function clearPin() {
-        pin = "";
-        updateDots();
-    }
-
-    function backspacePin() {
-        pin = pin.slice(0, -1);
-        updateDots();
-    }
-
-    // DRAGGABLE WINDOWS AND FOLDERS LOGIC
-    document.addEventListener('mousemove', (e) => {
-        if (draggedElement) {
-            draggedElement.style.left = (e.clientX - dragOffsetX) + 'px';
-            draggedElement.style.top = (e.clientY - dragOffsetY) + 'px';
-        }
-    });
-
-    document.addEventListener('mouseup', () => {
-        draggedElement = null;
-    });
-
-    function sD(e, winId) {
-        draggedElement = document.getElementById('win-' + winId);
-        dragOffsetX = e.clientX - draggedElement.offsetLeft;
-        dragOffsetY = e.clientY - draggedElement.offsetTop;
-        draggedElement.style.zIndex = ++zIndex;
-    }
-
-    function makeFolderDraggable(el) {
-        el.onmousedown = function(e) {
-            if (e.button !== 0) return;
-            if (e.target.classList.contains('folder-name')) return;
-            draggedElement = el;
-            dragOffsetX = e.clientX - el.offsetLeft;
-            dragOffsetY = e.clientY - el.offsetTop;
-        };
-    }
-
-    // CONTEXT MENU & FOLDER MANAGEMENT
     function showContextMenu(e) {
-        e.preventDefault();
-        const cm = document.getElementById('context-menu');
-        cm.style.display = 'flex';
-        cm.style.left = e.clientX + 'px';
-        cm.style.top = e.clientY + 'px';
-
-        const folderEl = e.target.closest('.folder-icon');
-        if (folderEl) {
-            selectedFolderId = folderEl.id;
-            const isZip = folderEl.getAttribute('data-is-zip') === 'true';
-            document.getElementById('ctx-rename').style.display = 'flex';
-            document.getElementById('ctx-compress').style.display = isZip ? 'none' : 'flex';
-            document.getElementById('ctx-extract').style.display = isZip ? 'flex' : 'none';
-            document.getElementById('ctx-delete').style.display = 'flex';
-            document.getElementById('ctx-new-folder').style.display = 'none';
-        } else {
-            selectedFolderId = null;
-            document.getElementById('ctx-rename').style.display = 'none';
-            document.getElementById('ctx-compress').style.display = 'none';
-            document.getElementById('ctx-extract').style.display = 'none';
-            document.getElementById('ctx-delete').style.display = 'none';
-            document.getElementById('ctx-new-folder').style.display = 'flex';
+        if (e.target.id === 'desktop' || e.target.id === 'os') {
+            e.preventDefault(); closeAllMenus();
+            const menu = document.getElementById('context-menu');
+            menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px';
+            menu.classList.add('active');
         }
     }
 
     function closeContextMenu() {
-        document.getElementById('context-menu').style.display = 'none';
+        document.getElementById('context-menu').classList.remove('active');
+        const fMenu = document.getElementById('folder-context-menu');
+        if (fMenu) fMenu.classList.remove('active');
     }
 
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('#context-menu')) closeContextMenu();
-    });
-
-    function createNewFolder(customName = null, isZip = false) {
+    function createNewFolder(name = null, isZip = false) {
+        closeContextMenu();
         folderCount++;
+        const folderId = 'folder-' + Date.now();
+        const defaultName = name || (isZip ? `Archive_${folderCount}.zip` : `New Folder ${folderCount}`);
+
         const desktop = document.getElementById('desktop');
-        const folder = document.createElement('div');
-        const id = 'folder-' + Date.now();
-        folder.className = 'folder-icon';
-        folder.id = id;
-        folder.setAttribute('data-is-zip', isZip);
+        const folderEl = document.createElement('div');
+        folderEl.className = 'desktop-folder';
+        folderEl.id = folderId;
 
-        const offset = (folderCount * 20) % 200;
-        folder.style.left = (30 + offset) + 'px';
-        folder.style.top = (30 + offset) + 'px';
+        const offset = (folderCount - 1) * 90;
+        folderEl.style.left = (20 + Math.floor(offset / 500) * 90) + 'px';
+        folderEl.style.top = (20 + (offset % 500)) + 'px';
 
-        const name = customName || `Untitled Folder ${folderCount}`;
-        const iconName = isZip ? 'file-archive' : 'folder';
+        folderEl.setAttribute('ondblclick', `openFolderWindow('${defaultName}')`);
+        folderEl.setAttribute('oncontextmenu', `showFolderContext(event, '${folderId}')`);
+        folderEl.setAttribute('onmousedown', `sDF(event, '${folderId}')`);
 
-        folder.innerHTML = `
-            <i data-lucide="${iconName}" style="width:48px; height:48px;"></i>
-            <span class="folder-name" id="name-${id}">${name}</span>
-        `;
+        const iconType = isZip ? 'file-archive' : 'folder';
+        folderEl.innerHTML = `<i data-lucide="${iconType}"></i><span id="name-${folderId}">${defaultName}</span>`;
+        desktop.appendChild(folderEl);
 
-        folder.oncontextmenu = (e) => {
-            e.stopPropagation();
-            showContextMenu(e);
-        };
-
-        folder.ondblclick = () => {
-            if (isZip) {
-                alert(`Cannot open compressed archive "${name}". Extract it first!`);
-            } else {
-                openFolderWindow(name);
-            }
-        };
-
-        desktop.appendChild(folder);
-        makeFolderDraggable(folder);
-
-        // Sync with Finder Virtual File System
-        if (!fileSystem.desktop.find(f => f.name === name)) {
-            fileSystem.desktop.push({
-                id: 'fs_' + Date.now(),
-                name: name,
-                type: 'folder'
-            });
-            if (wins['finder']) renderFinderUI();
-        }
-
+        fileSystem['Desktop'].push({ name: defaultName, type: 'folder', icon: iconType, id: folderId });
+        renderFinderView();
         lucide.createIcons();
+    }
+
+    let activeDragItem = null, activeDragType = null, dragOffsetX = 0, dragOffsetY = 0;
+
+    function sD(e, id) { 
+        if(e.button !== 0) return;
+        const targetWin = wins[id];
+        if(!targetWin || targetWin.classList.contains('fullscreen')) return; 
+        
+        activeDragItem = targetWin; activeDragType = 'window';
+        document.body.classList.add('dragging');
+        activeDragItem.style.zIndex = ++zIndex; 
+        
+        const rect = activeDragItem.getBoundingClientRect();
+        dragOffsetX = e.clientX - rect.left; dragOffsetY = e.clientY - rect.top; 
+        if (apps[id]) document.getElementById('active-app-name').innerText = apps[id].title; 
+    }
+
+    function sDF(e, folderId) {
+        if (e.button !== 0 || e.target.getAttribute('contenteditable') === 'true') return;
+        const folder = document.getElementById(folderId);
+        if (!folder) return;
+        activeDragItem = folder; activeDragType = 'folder';
+        document.body.classList.add('dragging');
+        const rect = folder.getBoundingClientRect();
+        dragOffsetX = e.clientX - rect.left; dragOffsetY = e.clientY - rect.top;
+    }
+
+    document.onmousemove = (e) => { 
+        if (!activeDragItem) return;
+        if (activeDragType === 'window') {
+            let newLeft = Math.max(0, Math.min(e.clientX - dragOffsetX, window.innerWidth - 50));
+            let newTop = Math.max(28, Math.min(e.clientY - dragOffsetY, window.innerHeight - 50));
+            activeDragItem.style.left = newLeft + 'px'; activeDragItem.style.top = newTop + 'px';
+        } else if (activeDragType === 'folder') {
+            const desktop = document.getElementById('desktop').getBoundingClientRect();
+            let newLeft = Math.max(0, Math.min(e.clientX - dragOffsetX - desktop.left, desktop.width - 80));
+            let newTop = Math.max(0, Math.min(e.clientY - dragOffsetY - desktop.top, desktop.height - 80));
+            activeDragItem.style.left = newLeft + 'px'; activeDragItem.style.top = newTop + 'px';
+        }
+    };
+
+    document.onmouseup = () => { activeDragItem = null; activeDragType = null; document.body.classList.remove('dragging'); };
+
+    function showFolderContext(e, folderId) {
+        e.preventDefault(); e.stopPropagation(); closeAllMenus();
+        selectedFolderId = folderId;
+        const menu = document.getElementById('folder-context-menu');
+        menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px';
+        menu.classList.add('active');
+    }
+
+    function openFolderFromContext() {
+        if (!selectedFolderId) return;
+        const nameSpan = document.getElementById(`name-${selectedFolderId}`);
+        openFolderWindow(nameSpan.innerText);
+        closeContextMenu();
     }
 
     function renameFolderFromContext() {
         if (!selectedFolderId) return;
         const nameSpan = document.getElementById(`name-${selectedFolderId}`);
         closeContextMenu();
-
-        nameSpan.contentEditable = "true";
-        nameSpan.focus();
-
-        const range = document.createRange();
-        range.selectNodeContents(nameSpan);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-
-        nameSpan.onkeydown = function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                nameSpan.contentEditable = "false";
-            }
-        };
+        nameSpan.contentEditable = "true"; nameSpan.focus();
+        nameSpan.onkeydown = function(e) { if (e.key === 'Enter') { e.preventDefault(); nameSpan.contentEditable = "false"; } };
     }
 
     function compressFolderFromContext() {
@@ -913,8 +389,7 @@
     function extractFolderFromContext() {
         if (!selectedFolderId) return;
         const nameSpan = document.getElementById(`name-${selectedFolderId}`);
-        let cleanName = nameSpan.innerText.replace('.zip', '') + '_extracted';
-        createNewFolder(cleanName, false);
+        createNewFolder(nameSpan.innerText.replace('.zip', '') + '_extracted', false);
         closeContextMenu();
     }
 
@@ -922,295 +397,197 @@
         if (!selectedFolderId) return;
         const folderEl = document.getElementById(selectedFolderId);
         if (folderEl) folderEl.remove();
+        fileSystem['Desktop'] = fileSystem['Desktop'].filter(item => item.id !== selectedFolderId);
+        renderFinderView();
         closeContextMenu();
     }
 
     function openFolderWindow(title) {
-        openApp('finder');
-        const folderKey = title.toLowerCase().replace(/\s+/g, '_');
-        if (!fileSystem[folderKey]) {
-            fileSystem[folderKey] = [];
-        }
-        setTimeout(() => {
-            navigateFinder(folderKey);
-        }, 50);
+        const windowId = 'folder-' + Date.now();
+        const w = document.createElement('div');
+        w.className = 'win'; w.id = 'win-' + windowId;
+        w.style.width = '450px'; w.style.height = '300px'; w.style.left = '150px'; w.style.top = '150px'; w.style.zIndex = ++zIndex;
+        w.innerHTML = `
+            <div class="win-bar" onmousedown="sD(event, '${windowId}')">
+                <div class="traffic-lights"><button class="tb tb-close" onclick="cA('${windowId}')"></button></div>
+                <span style="margin:auto; font-size:12px; font-weight:600;">${title}</span>
+            </div>
+            <div class="win-content" style="padding:20px; color:#aaa; font-size:13px; text-align:center;">This folder is empty.</div>
+        `;
+        document.getElementById('os').appendChild(w); wins[windowId] = w;
     }
 
-    // FINDER CONTROLLER LOGIC
-    function navigateFinder(path) {
-        finderCurrentPath = path;
-        if (finderHistory[finderHistoryIndex] !== path) {
-            finderHistory = finderHistory.slice(0, finderHistoryIndex + 1);
-            finderHistory.push(path);
-            finderHistoryIndex = finderHistory.length - 1;
-        }
-        renderFinderUI();
+    /* FINDER APPLICATION LOGIC */
+    function switchFinderTab(tab, el) {
+        currentFinderTab = tab;
+        document.querySelectorAll('.finder-item').forEach(i => i.classList.remove('active'));
+        if(el) el.classList.add('active');
+        document.getElementById('finder-path-title').innerText = tab;
+        renderFinderView();
     }
 
-    function finderGoBack() {
-        if (finderHistoryIndex > 0) {
-            finderHistoryIndex--;
-            finderCurrentPath = finderHistory[finderHistoryIndex];
-            renderFinderUI();
+    function renderFinderView(filter = '') {
+        const viewContainer = document.getElementById('finder-grid-container');
+        if(!viewContainer) return;
+
+        let items = fileSystem[currentFinderTab] || [];
+        if (filter.trim() !== '') {
+            items = items.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()));
         }
-    }
-
-    function finderGoForward() {
-        if (finderHistoryIndex < finderHistory.length - 1) {
-            finderHistoryIndex++;
-            finderCurrentPath = finderHistory[finderHistoryIndex];
-            renderFinderUI();
-        }
-    }
-
-    function renderFinderUI() {
-        const grid = document.getElementById('finder-grid');
-        const titleEl = document.getElementById('finder-current-title');
-        const statusEl = document.getElementById('finder-status');
-        if (!grid) return;
-
-        document.querySelectorAll('.finder-nav-item').forEach(item => item.classList.remove('active'));
-        const activeNav = document.getElementById(`fnav-${finderCurrentPath}`);
-        if (activeNav) activeNav.classList.add('active');
-
-        if (titleEl) titleEl.innerText = finderCurrentPath.replace(/_/g, ' ');
-
-        let items = fileSystem[finderCurrentPath] || [];
-        const searchVal = document.getElementById('finder-search')?.value.toLowerCase().trim();
-        if (searchVal) {
-            items = items.filter(item => item.name.toLowerCase().includes(searchVal));
-        }
-
-        if (statusEl) statusEl.innerText = `${items.length} item${items.length === 1 ? '' : 's'}`;
 
         if (items.length === 0) {
-            grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#666; margin-top:40px; font-size:13px;">Folder is Empty</div>`;
-            lucide.createIcons();
+            viewContainer.innerHTML = `<div style="color:#666; width:100%; text-align:center; margin-top:40px;">Folder is Empty</div>`;
             return;
         }
 
-        grid.innerHTML = items.map(item => {
-            let iconMarkup = '';
-            if (item.type === 'folder') {
-                iconMarkup = `<i data-lucide="folder" style="width:36px; height:36px; color:#48b2ff;"></i>`;
-            } else if (item.type === 'app') {
-                iconMarkup = `<div style="width:36px; height:36px; border-radius:8px; background:${item.color || '#007aff'}; display:flex; align-items:center; justify-content:center; color:white;"><i data-lucide="${item.icon}" style="width:20px; height:20px;"></i></div>`;
-            } else if (item.type === 'photo') {
-                iconMarkup = `<i data-lucide="image" style="width:36px; height:36px; color:#ff9500;"></i>`;
-            } else {
-                iconMarkup = `<i data-lucide="file-text" style="width:36px; height:36px; color:#aaa;"></i>`;
-            }
-
-            return `
-                <div class="finder-file-item" 
-                     ondblclick="openFinderItem('${item.id}')"
-                     style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; border-radius:8px; cursor:pointer; text-align:center; user-select:none; gap:6px;">
-                    ${iconMarkup}
-                    <span style="font-size:11px; color:#eee; word-break:break-word; line-height:1.2; max-width:75px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${escapeHtml(item.name)}</span>
-                </div>
-            `;
-        }).join('');
-
+        viewContainer.innerHTML = items.map(item => `
+            <div class="finder-file" ondblclick="handleFinderItemClick('${item.type}', '${item.id || item.name}')">
+                <i data-lucide="${item.icon || 'folder'}"></i>
+                <span>${item.name}</span>
+            </div>
+        `).join('');
         lucide.createIcons();
     }
 
-    function openFinderItem(id) {
-        let items = fileSystem[finderCurrentPath] || [];
-        let item = items.find(i => i.id === id);
-        if (!item) return;
-
-        if (item.type === 'app') {
-            openApp(item.appId);
-        } else if (item.type === 'folder') {
-            const pathKey = item.name.toLowerCase().replace(/\s+/g, '_');
-            if (!fileSystem[pathKey]) {
-                fileSystem[pathKey] = [];
-            }
-            navigateFinder(pathKey);
-        } else if (item.type === 'photo') {
-            openApp('photos');
-            if (item.url) previewPhoto(item.url);
-        } else if (item.type === 'file') {
-            openApp('notes');
-            setTimeout(() => {
-                const notesIn = document.getElementById('notes-input');
-                if (notesIn) notesIn.value = item.content || `[File Content: ${item.name}]`;
-            }, 100);
+    function handleFinderItemClick(type, identifier) {
+        if (type === 'app') {
+            openApp(identifier);
+        } else if (type === 'folder') {
+            openFolderWindow(identifier);
+        } else {
+            alert(`Opening file: ${identifier}`);
         }
-    }
-
-    function createFinderFolder() {
-        if (!fileSystem[finderCurrentPath]) fileSystem[finderCurrentPath] = [];
-        const count = fileSystem[finderCurrentPath].length + 1;
-        const newFolderName = `New Folder ${count}`;
-        const newFolderObj = {
-            id: 'fs_' + Date.now(),
-            name: newFolderName,
-            type: 'folder'
-        };
-        fileSystem[finderCurrentPath].push(newFolderObj);
-
-        if (finderCurrentPath === 'desktop') {
-            createNewFolder(newFolderName);
-        }
-
-        renderFinderUI();
     }
 
     const apps = {
         finder: {
-            title: 'Finder', w: 750, h: 480,
+            title: 'Finder', w: 680, h: 420,
             content: () => `
-                <div style="display:flex; height:100%; width:100%; background:#1c1c1e; color:white; font-family:-apple-system, sans-serif;">
-                    <div class="finder-sidebar" style="width:170px; background:rgba(40,40,45,0.7); border-right:1px solid rgba(255,255,255,0.1); padding:12px 8px; display:flex; flex-direction:column; gap:4px; font-size:12px;">
-                        <div style="font-size:10px; color:#8e8e93; font-weight:600; padding:4px 8px; text-transform:uppercase; letter-spacing:0.5px;">Favorites</div>
-                        <div class="finder-nav-item active" id="fnav-desktop" onclick="navigateFinder('desktop')"><i data-lucide="monitor" style="width:14px; margin-right:8px;"></i> Desktop</div>
-                        <div class="finder-nav-item" id="fnav-documents" onclick="navigateFinder('documents')"><i data-lucide="file-text" style="width:14px; margin-right:8px;"></i> Documents</div>
-                        <div class="finder-nav-item" id="fnav-downloads" onclick="navigateFinder('downloads')"><i data-lucide="download" style="width:14px; margin-right:8px;"></i> Downloads</div>
-                        <div class="finder-nav-item" id="fnav-applications" onclick="navigateFinder('applications')"><i data-lucide="layout-grid" style="width:14px; margin-right:8px;"></i> Applications</div>
-                        <div class="finder-nav-item" id="fnav-trash" onclick="navigateFinder('trash')"><i data-lucide="trash-2" style="width:14px; margin-right:8px;"></i> Trash</div>
+                <div class="finder-container">
+                    <div class="finder-sidebar">
+                        <div>
+                            <div class="finder-group-title">Favorites</div>
+                            <div class="finder-item active" onclick="switchFinderTab('Desktop', this)"><i data-lucide="monitor"></i> Desktop</div>
+                            <div class="finder-item" onclick="switchFinderTab('Documents', this)"><i data-lucide="file-text"></i> Documents</div>
+                            <div class="finder-item" onclick="switchFinderTab('Downloads', this)"><i data-lucide="download"></i> Downloads</div>
+                            <div class="finder-item" onclick="switchFinderTab('Applications', this)"><i data-lucide="layout-grid"></i> Applications</div>
+                            <div class="finder-item" onclick="switchFinderTab('Trash', this)"><i data-lucide="trash-2"></i> Trash</div>
+                        </div>
                     </div>
-
-                    <div style="flex:1; display:flex; flex-direction:column; background:#18181a;">
-                        <div class="finder-toolbar" style="height:42px; background:#252529; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; padding:0 12px; gap:12px;">
-                            <div style="display:flex; gap:4px;">
-                                <button onclick="finderGoBack()" style="background:rgba(255,255,255,0.1); border:none; color:white; border-radius:4px; padding:4px 8px; cursor:pointer;"><i data-lucide="chevron-left" style="width:14px;"></i></button>
-                                <button onclick="finderGoForward()" style="background:rgba(255,255,255,0.1); border:none; color:white; border-radius:4px; padding:4px 8px; cursor:pointer;"><i data-lucide="chevron-right" style="width:14px;"></i></button>
-                            </div>
-                            <span id="finder-current-title" style="font-size:13px; font-weight:600; text-transform:capitalize;">Desktop</span>
-                            <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
-                                <button onclick="createFinderFolder()" style="background:#007aff; border:none; color:white; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:4px;"><i data-lucide="folder-plus" style="width:12px;"></i> New Folder</button>
-                                <input id="finder-search" placeholder="Search" oninput="renderFinderUI()" style="background:#3a3a3c; border:none; border-radius:6px; color:white; padding:4px 8px; font-size:11px; width:120px; outline:none;">
-                            </div>
+                    <div class="finder-main">
+                        <div class="finder-toolbar">
+                            <button class="finder-nav-btn"><i data-lucide="chevron-left" style="width:16px;"></i></button>
+                            <button class="finder-nav-btn"><i data-lucide="chevron-right" style="width:16px;"></i></button>
+                            <span class="finder-path" id="finder-path-title">Desktop</span>
+                            <input class="finder-search" placeholder="Search" oninput="renderFinderView(this.value)">
                         </div>
-
-                        <div id="finder-grid" style="flex:1; padding:15px; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); grid-auto-rows:90px; gap:15px; overflow-y:auto;">
-                        </div>
-
-                        <div id="finder-status" style="height:24px; background:#202024; border-top:1px solid rgba(255,255,255,0.05); font-size:11px; color:#8e8e93; display:flex; align-items:center; padding:0 12px;">
-                            0 items
+                        <div class="finder-view">
+                            <div class="finder-grid" id="finder-grid-container"></div>
                         </div>
                     </div>
                 </div>`
-        },
-        myPage: {
-            title: 'My Page',
-            action: () => window.open('https://guns.lol/nextile', '_blank')
         },
         paint: {
             title: 'Canvas Paint', w: 500, h: 420,
-            content: () => `
-                <div style="display:flex; flex-direction:column; height:100%;">
-                    <div class="paint-toolbar">
-                        <label style="font-size:12px;">Color: </label>
-                        <input type="color" id="paint-color" value="#007aff" style="border:none; background:none; cursor:pointer; width:25px; height:25px;">
-                        <label style="font-size:12px; margin-left:10px;">Size: </label>
-                        <input type="range" id="paint-size" min="1" max="30" value="5" style="width:80px;">
-                        <button class="paint-btn" style="margin-left:auto;" onclick="clearCanvas()">Clear</button>
-                    </div>
-                    <div style="flex:1; background:#ffffff; position:relative;">
-                        <canvas id="paint-canvas" style="width:100%; height:100%; display:block; cursor:crosshair;"></canvas>
-                    </div>
-                </div>`
+            content: () => `<div style="display:flex; flex-direction:column; height:100%;"><div class="paint-toolbar"><label style="font-size:12px;">Color: </label><input type="color" id="paint-color" value="#007aff" style="border:none; background:none; cursor:pointer; width:25px; height:25px;"><label style="font-size:12px; margin-left:10px;">Size: </label><input type="range" id="paint-size" min="1" max="30" value="5" style="width:80px;"><button class="paint-btn" style="margin-left:auto;" onclick="clearCanvas()">Clear</button></div><div style="flex:1; background:#ffffff; position:relative;"><canvas id="paint-canvas" style="width:100%; height:100%; display:block; cursor:crosshair;"></canvas></div></div>`
         },
         notes: {
             title: 'Notes', w: 400, h: 400,
-            content: () => `
-                <div style="display:flex; flex-direction:column; height:100%; padding:10px;">
-                    <textarea id="notes-input" placeholder="Type your notes here..." style="flex:1; width:100%; background:#121215; border:none; color:white; padding:12px; border-radius:8px; outline:none; resize:none; font-family:sans-serif;" oninput="localStorage.setItem('nextos_notes', this.value)"></textarea>
-                </div>`
+            content: () => `<div style="display:flex; flex-direction:column; height:100%; padding:10px;"><textarea id="notes-input" placeholder="Type your notes here..." style="flex:1; width:100%; background:#121215; border:none; color:white; padding:12px; border-radius:8px; outline:none; resize:none;" oninput="localStorage.setItem('nextos_notes', this.value)"></textarea></div>`
         },
         music: {
             title: 'Music Player', w: 350, h: 320,
-            content: () => `
-                <div style="padding:15px; display:flex; flex-direction:column; height:100%;">
-                    <div style="text-align:center; margin-bottom:15px;">
-                        <h4 id="now-playing-title" style="margin-bottom:5px;">Select a Track</h4>
-                        <audio id="audio-player" controls style="width:100%; margin-top:5px;"></audio>
-                    </div>
-                    <div style="flex:1; overflow-y:auto;">
-                        ${songs.map((song, i) => `
-                            <div class="track-item" onclick="playSong('${song.url}', '${song.name}')">
-                                <span><i data-lucide="music" style="width:14px; vertical-align:middle; margin-right:6px;"></i> ${song.name}</span>
-                                <i data-lucide="play" style="width:14px;"></i>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`
+            content: () => `<div style="padding:15px; display:flex; flex-direction:column; height:100%;"><div style="text-align:center; margin-bottom:15px;"><h4 id="now-playing-title" style="margin-bottom:5px;">Select a Track</h4><audio id="audio-player" controls style="width:100%; margin-top:5px;"></audio></div><div style="flex:1; overflow-y:auto;">${songs.map(song => `<div class="track-item" onclick="playSong('${song.url}', '${song.name}')"><span><i data-lucide="music" style="width:14px; vertical-align:middle; margin-right:6px;"></i> ${song.name}</span><i data-lucide="play" style="width:14px;"></i></div>`).join('')}</div></div>`
         },
         browser: { 
             title: 'Safari', w: 900, h: 600, 
-            content: () => `
-                <div class="browser-nav">
-                    <i data-lucide="home" style="cursor:pointer; width:18px;" onclick="loadSearch('https://www.google.com/search?igu=1')"></i>
-                    <input class="browser-url" id="url-bar" value="Search Google..." onfocus="this.value=''" onkeydown="if(event.key==='Enter') loadSearch('https://www.google.com/search?igu=1&q=' + encodeURIComponent(this.value))">
-                    <i data-lucide="rotate-cw" style="cursor:pointer; width:18px;" onclick="loadSearch(document.getElementById('browser-frame').src)"></i>
-                </div>
-                <iframe id="browser-frame" src="https://www.google.com/search?igu=1" style="width:100%; height:calc(100% - 45px); border:none; background:white;"></iframe>` 
+            content: () => `<div class="browser-nav"><i data-lucide="home" style="cursor:pointer; width:18px;" onclick="loadSearch('https://www.google.com/search?igu=1')"></i><input class="browser-url" id="url-bar" value="Search Google..." onfocus="this.value=''" onkeydown="if(event.key==='Enter') loadSearch('https://www.google.com/search?igu=1&q=' + encodeURIComponent(this.value))"><i data-lucide="rotate-cw" style="cursor:pointer; width:18px;" onclick="loadSearch(document.getElementById('browser-frame').src)"></i></div><iframe id="browser-frame" src="https://www.google.com/search?igu=1" style="width:100%; height:calc(100% - 45px); border:none; background:white;"></iframe>` 
         },
         photos: {
             title: 'Photos', w: 500, h: 450,
-            content: () => `
-                <div style="position:relative; height:100%; display:flex; flex-direction:column;">
-                    <div style="padding:10px 15px; background:#2a2a30; font-size:13px; font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.1);">Scenery Gallery</div>
-                    <div class="photo-grid" style="flex:1; overflow-y:auto;">
-                        ${photosList.map(url => `<div class="photo-card" style="background-image:url('${url}');" onclick="previewPhoto('${url}')"></div>`).join('')}
-                    </div>
-                    <div class="photo-preview" id="photo-lightbox">
-                        <button class="photo-close-btn" onclick="closePhotoPreview()">Close</button>
-                        <img id="preview-img" src="">
-                    </div>
-                </div>`
+            content: () => `<div style="position:relative; height:100%; display:flex; flex-direction:column;"><div style="padding:10px 15px; background:#2a2a30; font-size:13px; font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.1);">Scenery Gallery</div><div class="photo-grid" style="flex:1; overflow-y:auto;">${photosList.map(url => `<div class="photo-card" style="background-image:url('${url}');" onclick="previewPhoto('${url}')"></div>`).join('')}</div><div class="photo-preview" id="photo-lightbox"><button class="photo-close-btn" onclick="closePhotoPreview()">Close</button><img id="preview-img" src=""></div></div>`
         },
-        assistant: {
-            title: 'Assistant', w: 420, h: 520,
-            content: () => `
-                <div style="display:flex; flex-direction:column; height:100%; padding:15px; background:#1e1e24;">
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                        <i data-lucide="bot" style="width:22px; height:22px; color:#007aff;"></i>
-                        <h4 style="color:#fff;">System Assistant</h4>
-                    </div>
-                    <div id="assistant-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px; line-height:1.4;">
-                        Hello! I am <b>Assistant</b>. Ask me for the time, date, math problems, or to open apps like <i>"open paint"</i>!
-                    </div>
-                    <div style="display:flex; gap:5px;">
-                        <input id="assistant-in" placeholder="Type a command or query..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendAssistantMsg()">
-                        <button onclick="sendAssistantMsg()" style="padding:8px 12px; background:#007aff; border:none; border-radius:6px; color:white; cursor:pointer;">Send</button>
-                    </div>
-                </div>`
-        },
-        calc: { 
-            title: 'Calculator', 
-            w: 300, 
-            h: 420, 
-            content: () => `<div id="d" style="padding:20px; font-size:36px; text-align:right; height:70px; background:#111; color:white; overflow:hidden;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/", "7","8","9","*", "4","5","6","-", "1","2","3","+", "0","00",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.5px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333; color:white; font-weight:bold; user-select:none;">${b}</div>`).join('')}</div>` 
-        },
+        calc: { title: 'Calculator', w: 300, h: 420, content: () => `<div id="d" style="padding:20px; font-size:36px; text-align:right; height:70px; background:#111; color:white; overflow:hidden;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/", "7","8","9","*", "4","5","6","-", "1","2","3","+", "0","00",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.5px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333; color:white; font-weight:bold;">${b}</div>`).join('')}</div>` },
         calendar: { title: 'Calendar', w: 350, h: 420, content: () => `<div id="cal-root"></div>` },
         terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v16.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
-        weather: { 
-            title: 'Weather', w: 450, h: 550, 
-            content: () => `<iframe src="https://nextiletext.github.io/Weather-app3/" style="width:100%; height:100%; border:none; background:#1c1c1e;"></iframe>` 
-        },
+        weather: { title: 'Weather', w: 450, h: 550, content: () => `<iframe src="https://nextiletext.github.io/Weather-app3/" style="width:100%; height:100%; border:none; background:#1c1c1e;"></iframe>` },
         settings: { 
             title: 'Settings', w: 420, h: 420, 
-            content: () => `
-                <div style="padding:20px;">
-                    <h3 style="margin-bottom:8px; font-size:15px;">Display Brightness</h3>
-                    <input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%; accent-color:#007aff;">
-                    <hr style="border:0; border-top:1px solid #3a3a3c; margin:20px 0;">
-                    <h3 style="margin-bottom:8px; font-size:15px;">Wallpaper Themes</h3>
-                    <div class="theme-grid">
-                        ${themes.map((t, index) => `<div class="theme-card" style="background-image:url('${t.url}');" onclick="setThemeByIndex(${index})"><span>${t.name}</span></div>`).join('')}
-                    </div>
-                </div>` 
-        },
-        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Right click on desktop/folders for contextual menus.<br>- Drag icons to position them freely.<br>- Double click folders to open their window contents via Finder.</p></div>` }
+            content: () => `<div style="padding:20px;"><h3 style="margin-bottom:8px; font-size:15px;">Display Brightness</h3><input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%; accent-color:#007aff;"><hr style="border:0; border-top:1px solid #3a3a3c; margin:20px 0;"><h3 style="margin-bottom:8px; font-size:15px;">Wallpaper Themes</h3><div class="theme-grid">${themes.map((t, index) => `<div class="theme-card" style="background-image:url('${t.url}');" onclick="setThemeByIndex(${index})"><span>${t.name}</span></div>`).join('')}</div></div>` 
+        }
     };
 
-    function initPaint() {
-        const canvas = document.getElementById('paint-canvas');
-        if(!canvas) return;
-        const ctx = canvas.getContext('2d');
+    function unlock() { playMacStartupChime(); lock.classList.add('unlocked'); os.style.display = 'block'; document.getElementById('pass-box').innerText = ''; }
+    function lockOS() { lock.classList.remove('unlocked'); closeAllMenus(); }
+    function toggleMenu(id) { closeAllMenus(); document.getElementById(id).classList.toggle('active'); }
+    function closeAllMenus() { document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active')); }
+    function minimizeAll() { Object.keys(wins).forEach(id => minA(id)); }
+    function closeAllApps() { Object.keys(wins).forEach(id => cA(id)); }
+    function toggleDarkMode() { alert('Theme updated!'); }
+    function loadSearch(url) { document.getElementById('browser-frame').src = url; }
+
+    function openApp(id) {
+        closeAllMenus();
+        const a = apps[id];
+        if (!a) return;
+
+        if (wins[id]) { wins[id].classList.remove('minimized'); wins[id].style.zIndex = ++zIndex; return; }
+        const w = document.createElement('div');
+        w.className = 'win'; w.id = 'win-'+id; w.style.width = a.w+'px'; w.style.height = a.h+'px';
+        w.style.left = '100px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
+        w.innerHTML = `<div class="win-bar" onmousedown="sD(event,'${id}')"><div class="traffic-lights"><button class="tb tb-close" onclick="cA('${id}')"></button><button class="tb tb-min" onclick="minA('${id}')"></button><button class="tb tb-max" onclick="tF('${id}')"></button></div><span style="margin:auto; font-size:12px; font-weight:600;">${a.title}</span></div><div class="win-content">${a.content()}</div>`;
+        os.appendChild(w); wins[id] = w;
         
-        const rect = canvas.getBoundingClientRect();
-        let tempCanvas = null;
+        if(id === 'finder') renderFinderView();
+        if(id === 'calendar') rC();
+        lucide.createIcons();
+    }
+
+    function rC() {
+        const root = document.getElementById('cal-root');
+        const monthDays = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
+        const startDay = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
+        const isCurrentMonth = viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear();
+        
+        const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+        let dayHeadersHtml = weekdays.map(day => `<div style="font-weight:bold; color:#8e8e93; font-size:12px; padding:6px 0;">${day}</div>`).join('');
+        let gridHtml = '';
+        for(let i=0; i<startDay; i++) gridHtml += `<div></div>`;
+        for(let i=1; i<=monthDays; i++) {
+            const blue = (isCurrentMonth && i === today.getDate()) ? 'background:#007aff; border-radius:50%; font-weight:bold;' : '';
+            gridHtml += `<div style="padding:8px; ${blue}">${i}</div>`;
+        }
+        root.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:#2c2c2e;"><button onclick="cD(-1)" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="chevron-left"></i></button><span style="font-weight:600;">${viewDate.toLocaleString('default',{month:'long'})} ${viewDate.getFullYear()}</span><button onclick="cD(1)" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="chevron-right"></i></button></div><div style="display:grid; grid-template-columns:repeat(7,1fr); padding:10px 10px 0 10px; text-align:center; border-bottom:0.5px solid #3a3a3c;">${dayHeadersHtml}</div><div style="display:grid; grid-template-columns:repeat(7,1fr); padding:10px; text-align:center; font-size:13px;">${gridHtml}</div>`;
+        lucide.createIcons();
+    }
+
+    window.cD = (d) => { viewDate.setMonth(viewDate.getMonth()+d); rC(); };
+    window.hC = (b) => { 
+        const d = document.getElementById('d'); 
+        if(b === "C") calcVal = ""; 
+        else if(b === "±") { if(calcVal) calcVal = (parseFloat(calcVal) * -1).toString(); }
+        else if(b === "%") { if(calcVal) calcVal = (parseFloat(calcVal) / 100).toString(); }
+        else if(b === "=") { try{ calcVal = eval(calcVal).toString(); }catch{ calcVal = "Error"; } } 
+        else calcVal += b; 
+        d.innerText = calcVal || "0"; 
+    };
+    
+    window.tF = (id) => {
+        const w = wins[id]; if (!w) return;
+        w.classList.toggle('fullscreen');
+    };
+
+    window.minA = (id) => { if (wins[id]) wins[id].classList.add('minimized'); };
+    window.cA = (id) => { if (wins[id]) { os.removeChild(wins[id]); delete wins[id]; } };
+
+    setInterval(() => { 
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        document.getElementById('lock-time').innerText = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        document.getElementById('menubar-date').innerText = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    }, 1000);
+    
+    window.onload = () => lucide.createIcons();
+</script>
+</body>
+</html>

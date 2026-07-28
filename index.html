@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - by nextile</title>
+    <title>NextOS - project</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -16,6 +16,48 @@
         /* Disable iframe events while dragging to prevent frame drops */
         body.dragging iframe {
             pointer-events: none !important;
+        }
+
+        /* DESKTOP CONTAINER FOR FOLDERS */
+        #desktop {
+            position: absolute;
+            inset: 28px 0 70px 0;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 15px;
+            padding: 20px;
+            z-index: 1;
+        }
+
+        .desktop-folder {
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            border-radius: 8px;
+            padding: 8px 4px;
+        }
+
+        .desktop-folder:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .desktop-folder i {
+            width: 42px;
+            height: 42px;
+            color: #5AC8FA;
+        }
+
+        .desktop-folder span {
+            font-size: 11px;
+            text-align: center;
+            margin-top: 4px;
+            word-break: break-word;
         }
 
         /* LOCK SCREEN */
@@ -127,7 +169,7 @@
         .paint-btn { padding: 4px 8px; background: #007aff; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px; }
     </style>
 </head>
-<body onclick="closeAllMenus()">
+<body onclick="closeAllMenus(); closeContextMenu();">
 
 <div id="lock-screen">
     <div class="lock-blur"></div>
@@ -136,6 +178,13 @@
 </div>
 
 <div id="os">
+    <div id="desktop" onclick="closeContextMenu()" oncontextmenu="showContextMenu(event)"></div>
+
+    <div id="context-menu" class="dropdown" style="position: absolute; z-index: 15000;">
+        <div class="drop-item" onclick="createNewFolder()">New Folder</div>
+        <div class="drop-item" onclick="openApp('settings')">Change Wallpaper</div>
+    </div>
+
     <div id="menubar">
         <div class="m-menu-wrapper">
             <div class="apple-logo" onclick="event.stopPropagation(); toggleMenu('apple-dropdown')"><i data-lucide="apple" style="width:16px;"></i></div>
@@ -154,6 +203,7 @@
         <div class="m-menu-wrapper">
             <span class="m-item" onclick="event.stopPropagation(); toggleMenu('file-dropdown')">File</span>
             <div class="dropdown" id="file-dropdown">
+                <div class="drop-item" onclick="createNewFolder()">New Folder</div>
                 <div class="drop-item" onclick="openApp('terminal')">New Terminal Window</div>
                 <div class="drop-item" onclick="openApp('browser')">New Browser Window</div>
             </div>
@@ -220,7 +270,7 @@
 
 <script>
     const os = document.getElementById('os'), lock = document.getElementById('lock-screen');
-    let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
+    let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "", folderCount = 0;
     const today = new Date();
 
     function playMacStartupChime() {
@@ -266,6 +316,83 @@
         { name: "Chillhop Beats", url: "https://stream.zeno.fm/0r0xa792kwzuv" },
         { name: "Acoustic Breeze", url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" }
     ];
+
+    /* DESKTOP RIGHT CLICK MENU & FOLDER MANAGEMENT */
+    function showContextMenu(e) {
+        if (e.target.id === 'desktop' || e.target.id === 'os') {
+            e.preventDefault();
+            closeAllMenus();
+            const menu = document.getElementById('context-menu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.classList.add('active');
+        }
+    }
+
+    function closeContextMenu() {
+        document.getElementById('context-menu').classList.remove('active');
+    }
+
+    function createNewFolder() {
+        closeContextMenu();
+        folderCount++;
+        const folderId = 'folder-' + Date.now();
+        const defaultName = 'New Folder ' + folderCount;
+
+        const desktop = document.getElementById('desktop');
+        const folderEl = document.createElement('div');
+        folderEl.className = 'desktop-folder';
+        folderEl.id = folderId;
+        folderEl.setAttribute('ondblclick', `openFolderWindow('${defaultName}')`);
+        folderEl.setAttribute('oncontextmenu', `showFolderContext(event, '${folderId}')`);
+
+        folderEl.innerHTML = `
+            <i data-lucide="folder"></i>
+            <span id="name-${folderId}">${defaultName}</span>
+        `;
+
+        desktop.appendChild(folderEl);
+        lucide.createIcons();
+    }
+
+    function showFolderContext(e, folderId) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const nameSpan = document.getElementById(`name-${folderId}`);
+        const action = prompt("Folder Options:\n1. Type a new name to rename\n2. Type 'DELETE' to remove folder", nameSpan.innerText);
+
+        if (action === 'DELETE') {
+            document.getElementById(folderId).remove();
+        } else if (action && action.trim() !== '') {
+            nameSpan.innerText = action.trim();
+        }
+    }
+
+    function openFolderWindow(title) {
+        const windowId = 'win-folder-' + Date.now();
+        const w = document.createElement('div');
+        w.className = 'win';
+        w.style.width = '450px';
+        w.style.height = '300px';
+        w.style.left = '150px';
+        w.style.top = '150px';
+        w.style.zIndex = ++zIndex;
+
+        w.innerHTML = `
+            <div class="win-bar" onmousedown="sD(event, '${windowId}')">
+                <div class="traffic-lights">
+                    <button class="tb tb-close" onclick="this.closest('.win').remove()"></button>
+                </div>
+                <span style="margin:auto; font-size:12px; font-weight:600;">${title}</span>
+            </div>
+            <div class="win-content" style="padding:20px; color:#aaa; font-size:13px; text-align:center;">
+                This folder is empty.
+            </div>
+        `;
+
+        document.getElementById('os').appendChild(w);
+    }
 
     const apps = {
         myPage: {
@@ -379,7 +506,7 @@
                     </div>
                 </div>` 
         },
-        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Use the dock icons to open apps or external pages.<br>- Customize display wallpaper and brightness in Settings.</p></div>` }
+        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Right click on the desktop to create new folders.<br>- Use the dock icons to open apps or external pages.<br>- Customize display wallpaper and brightness in Settings.</p></div>` }
     };
 
     function initPaint() {

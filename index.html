@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - by nextile(upd)</title>
+    <title>NextOS - by nextile</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -145,7 +145,7 @@
             </div>
         </div>
 
-        <div class="gemini-btn" title="Open Nextile AI" onclick="openApp('gemini')">
+        <div class="gemini-btn" title="Open Assistant" onclick="openApp('assistant')">
             <i data-lucide="bot" style="width:17px; height:17px; color:#007aff;"></i>
         </div>
 
@@ -337,20 +337,20 @@
                     </div>
                 </div>`
         },
-        gemini: {
-            title: 'Nextile AI', w: 420, h: 520,
+        assistant: {
+            title: 'Assistant', w: 420, h: 520,
             content: () => `
                 <div style="display:flex; flex-direction:column; height:100%; padding:15px; background:#1e1e24;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
                         <i data-lucide="bot" style="width:22px; height:22px; color:#007aff;"></i>
-                        <h4 style="color:#fff;">Nextile AI Assistant</h4>
+                        <h4 style="color:#fff;">System Assistant</h4>
                     </div>
-                    <div id="gemini-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px; line-height:1.4;">
-                        Hello! I am <b>Nextile AI</b>. Ask me questions, solve math, or tell me to open apps like <i>"open paint"</i>!
+                    <div id="assistant-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px; line-height:1.4;">
+                        Hello! I am <b>Assistant</b>. Ask me for the time, date, math problems, or to open apps like <i>"open paint"</i>!
                     </div>
                     <div style="display:flex; gap:5px;">
-                        <input id="gemini-in" placeholder="Ask or command Nextile AI..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendGeminiMsg()">
-                        <button onclick="sendGeminiMsg()" style="padding:8px 12px; background:#007aff; border:none; border-radius:6px; color:white; cursor:pointer;">Send</button>
+                        <input id="assistant-in" placeholder="Type a command or query..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendAssistantMsg()">
+                        <button onclick="sendAssistantMsg()" style="padding:8px 12px; background:#007aff; border:none; border-radius:6px; color:white; cursor:pointer;">Send</button>
                     </div>
                 </div>`
         },
@@ -475,10 +475,10 @@
     function setThemeByIndex(idx) { if (themes[idx]) setTheme(themes[idx].url); }
     function setTheme(url) { if (!url || !url.trim()) return; document.documentElement.style.setProperty('--bg', `url('${url.trim()}')`); }
 
-    /* REAL AI PUBLIC ENGINE (POLLINATIONS GET REQUEST) */
-    async function sendGeminiMsg() {
-        const input = document.getElementById('gemini-in');
-        const chat = document.getElementById('gemini-chat');
+    /* ASSISTANT CHAT ENGINE */
+    async function sendAssistantMsg() {
+        const input = document.getElementById('assistant-in');
+        const chat = document.getElementById('assistant-chat');
         const query = input.value.trim();
         if(!query) return;
 
@@ -487,13 +487,13 @@
         chat.scrollTop = chat.scrollHeight;
 
         const loadingId = 'loading-' + Date.now();
-        chat.innerHTML += `<div id="${loadingId}" style="margin-top:8px; color:#aaa;"><b>Nextile AI:</b> <i>Thinking...</i></div>`;
+        chat.innerHTML += `<div id="${loadingId}" style="margin-top:8px; color:#aaa;"><b>Assistant:</b> <i>Processing...</i></div>`;
         chat.scrollTop = chat.scrollHeight;
 
-        const reply = await processNextileAI(query);
+        const reply = await processAssistant(query);
         const loader = document.getElementById(loadingId);
         if (loader) {
-            loader.innerHTML = `<b>Nextile AI:</b> ${reply}`;
+            loader.innerHTML = `<b>Assistant:</b> ${reply}`;
         }
         chat.scrollTop = chat.scrollHeight;
     }
@@ -502,8 +502,8 @@
         return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    async function processNextileAI(q) {
-        const lower = q.toLowerCase();
+    async function processAssistant(q) {
+        const lower = q.toLowerCase().trim();
 
         // 1. Local OS Commands
         if (lower.includes('open paint')) { openApp('paint'); return "Opening Paint for you!"; }
@@ -519,22 +519,50 @@
         if (lower.includes('lock screen') || lower.includes('lock os')) { lockOS(); return "Locking screen..."; }
         if (lower.includes('clear canvas') || lower.includes('clear paint')) { clearCanvas(); return "Cleared the paint canvas for you!"; }
 
-        // 2. Public AI API (CORS-friendly GET request)
-        try {
-            const prompt = `You are Nextile AI, the built-in intelligent assistant inside NextOS. Answer clearly, concisely, and accurately. User question: ${q}`;
-            const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
-
-            if (response.ok) {
-                const aiText = await response.text();
-                return escapeHtml(aiText)
-                    .replace(/\n/g, '<br>')
-                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-            }
-        } catch (error) {
-            console.error("AI Fetch Error:", error);
+        // 2. Time & Date Utility
+        if (lower.includes('time') || lower.includes('clock')) {
+            const now = new Date();
+            return `The current system time is <b>${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</b>.`;
+        }
+        if (lower.includes('date') || lower.includes('day') || lower.includes('today')) {
+            const now = new Date();
+            return `Today is <b>${now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</b>.`;
         }
 
-        return "Sorry, I had trouble reaching the AI service. Please try again in a moment!";
+        // 3. Conversational Basics
+        if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+            return "Hello! I am your <b>Assistant</b>. Ask me for the time, date, math problems, or search Wikipedia knowledge!";
+        }
+        if (lower.includes('who are you') || lower.includes('your name')) {
+            return "I am <b>Assistant</b>, your built-in NextOS system utility.";
+        }
+
+        // 4. Quick Math Evaluator
+        const mathExpression = q.replace(/calc|calculate|what is|evaluate|compute|\?/gi, '').trim();
+        if (/^[0-9+\-*/\s().]+$/.test(mathExpression) && mathExpression.length > 0) {
+            try {
+                const result = eval(mathExpression);
+                return `Result: <b>${result}</b>`;
+            } catch (e) {}
+        }
+
+        // 5. Open Wikipedia Knowledge Base Lookup
+        try {
+            const queryTerm = q.replace(/what is|who is|tell me about|search|where is|define/gi, '').trim();
+            if (queryTerm) {
+                const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(queryTerm)}`);
+                if (wikiRes.ok) {
+                    const data = await wikiRes.json();
+                    if (data.extract) {
+                        return `<b>${escapeHtml(data.title)}:</b> ${escapeHtml(data.extract)}`;
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Wiki Knowledge Error:", err);
+        }
+
+        return "I couldn't find a direct match. Try asking <i>'what time is it'</i>, <i>'open paint'</i>, or searching a topic like <i>'what is Photosynthesis'</i>!";
     }
 
     function unlock() { 

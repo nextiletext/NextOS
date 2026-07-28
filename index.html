@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - project</title>
+    <title>NextOS - by nextile</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -470,7 +470,7 @@
     function setThemeByIndex(idx) { if (themes[idx]) setTheme(themes[idx].url); }
     function setTheme(url) { if (!url || !url.trim()) return; document.documentElement.style.setProperty('--bg', `url('${url.trim()}')`); }
 
-    /* FUNCTIONAL NEXTILE AI ENGINE */
+    /* REAL AI PUBLIC ENGINE (POLLINATIONS) */
     async function sendGeminiMsg() {
         const input = document.getElementById('gemini-in');
         const chat = document.getElementById('gemini-chat');
@@ -500,7 +500,7 @@
     async function processNextileAI(q) {
         const lower = q.toLowerCase();
 
-        // 1. System OS Commands
+        // 1. Local OS Commands
         if (lower.includes('open paint')) { openApp('paint'); return "Opening Paint for you!"; }
         if (lower.includes('open safari') || lower.includes('open browser')) { openApp('browser'); return "Opening Safari!"; }
         if (lower.includes('open notes')) { openApp('notes'); return "Opening Notes!"; }
@@ -514,52 +514,34 @@
         if (lower.includes('lock screen') || lower.includes('lock os')) { lockOS(); return "Locking screen..."; }
         if (lower.includes('clear canvas') || lower.includes('clear paint')) { clearCanvas(); return "Cleared the paint canvas for you!"; }
 
-        // 2. Time & Date
-        if (lower.includes('time')) { return `The current time is <b>${new Date().toLocaleTimeString([], {hour: 'numeric', minute:'2-digit', hour12: true})}</b>.`; }
-        if (lower.includes('date') || lower.includes('day')) { return `Today is <b>${new Date().toLocaleDateString([], {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'})}</b>.`; }
-
-        // 3. Math Expression Solver
-        if (/^[0-9+\-*/().\s^]+$/.test(q) && /[0-9]/.test(q)) {
-            try {
-                const res = eval(q.replace(/\^/g, '**'));
-                return `The answer is <b>${res}</b>.`;
-            } catch(e) {}
-        }
-
-        // 4. Live Knowledge API (Wikipedia)
-        if (lower.startsWith('what is') || lower.startsWith('who is') || lower.startsWith('tell me about') || lower.startsWith('define')) {
-            const searchTerm = q.replace(/^(what is|who is|tell me about|define)\s+/i, '').trim();
-            try {
-                const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.extract) {
-                        return `${data.extract}`;
-                    }
-                }
-            } catch(e) {}
-        }
-
-        // 5. Friendly Conversations
-        if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-            return "Hello there! How can I help you in NextOS today? You can ask me questions, calculate math, or tell me to open apps!";
-        }
-        if (lower.includes('who are you') || lower.includes('your name')) {
-            return "I am <b>Nextile AI</b>, your intelligent built-in assistant for NextOS!";
-        }
-
-        // Default fallback query lookup
+        // 2. Real Public AI API (Works for everyone, no key required)
         try {
-            const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.extract && data.type !== 'disambiguation') {
-                    return `${data.extract}`;
-                }
-            }
-        } catch(e) {}
+            const response = await fetch('https://text.pollinations.ai/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [
+                        { 
+                            role: 'system', 
+                            content: 'You are Nextile AI, the official intelligent assistant inside NextOS. You can help users write code, answer general questions, solve math, and chat. Keep responses clear, helpful, and concise.' 
+                        },
+                        { role: 'user', content: q }
+                    ],
+                    model: 'openai'
+                })
+            });
 
-        return `I'm not sure about that exact question, but you can ask me to open apps (e.g. <i>"open paint"</i>), check the time, solve math equations, or search topics (e.g. <i>"What is Mars?"</i>)!`;
+            if (response.ok) {
+                const aiText = await response.text();
+                return escapeHtml(aiText)
+                    .replace(/\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            }
+        } catch (error) {
+            console.error("AI Fetch Error:", error);
+        }
+
+        return "Sorry, I had trouble reaching the AI service. Please try again in a moment!";
     }
 
     function unlock() { 

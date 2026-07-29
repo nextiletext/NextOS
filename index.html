@@ -716,25 +716,7 @@
 
     /* TRASH SYSTEM FUNCTIONS */
     function deleteFolderFromContext() {
-        if (!selectedFolderId) return;
-        const folderEl = document.getElementById(selectedFolderId);
-        if (folderEl) {
-            const nameSpan = document.getElementById(`name-${selectedFolderId}`);
-            const folderName = nameSpan ? nameSpan.innerText : 'Folder';
-            
-            trashItems.push({
-                id: selectedFolderId,
-                name: folderName,
-                icon: folderName.endsWith('.zip') ? 'file-archive' : 'folder',
-                left: folderEl.style.left,
-                top: folderEl.style.top
-            });
-
-            desktopCreatedFolders = desktopCreatedFolders.filter(f => f.id !== selectedFolderId);
-            folderEl.remove();
-            refreshTrashUI();
-            if (activeFinderTab === 'desktop') switchFinderTab('desktop');
-        }
+        deleteSelectedDesktopFolders();
         closeContextMenu();
     }
 
@@ -795,6 +777,8 @@
 
     /* UNIFIED DRAGGING SYSTEM FOR WINDOWS AND FOLDERS */
     let activeDragItem = null, activeDragType = null, dragOffsetX = 0, dragOffsetY = 0;
+    let dragFolderStartPositions = [];
+    let dragStartMouseX = 0, dragStartMouseY = 0;
 
     function sD(e, id) { 
         if(e.button !== 0) return;
@@ -820,18 +804,28 @@
         const folder = document.getElementById(folderId);
         if (!folder) return;
 
-        if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !folder.classList.contains('selected')) {
-            clearDesktopSelections();
+        if (!folder.classList.contains('selected')) {
+            if (!e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                clearDesktopSelections();
+            }
+            folder.classList.add('selected');
         }
-        folder.classList.add('selected');
 
         activeDragItem = folder;
         activeDragType = 'folder';
         document.body.classList.add('dragging');
 
-        const rect = folder.getBoundingClientRect();
-        dragOffsetX = e.clientX - rect.left;
-        dragOffsetY = e.clientY - rect.top;
+        dragStartMouseX = e.clientX;
+        dragStartMouseY = e.clientY;
+
+        const selectedFolders = document.querySelectorAll('.desktop-folder.selected');
+        dragFolderStartPositions = Array.from(selectedFolders).map(f => {
+            return {
+                el: f,
+                startX: parseFloat(f.style.left) || 0,
+                startY: parseFloat(f.style.top) || 0
+            };
+        });
     }
 
     document.onmousemove = (e) => { 
@@ -851,21 +845,27 @@
             activeDragItem.style.top = newTop + 'px';
         } 
         else if (activeDragType === 'folder') {
+            const deltaX = e.clientX - dragStartMouseX;
+            const deltaY = e.clientY - dragStartMouseY;
             const desktop = document.getElementById('desktop').getBoundingClientRect();
-            let newLeft = e.clientX - dragOffsetX - desktop.left;
-            let newTop = e.clientY - dragOffsetY - desktop.top;
 
-            newLeft = Math.max(0, Math.min(newLeft, desktop.width - 80));
-            newTop = Math.max(0, Math.min(newTop, desktop.height - 80));
+            dragFolderStartPositions.forEach(item => {
+                let newLeft = item.startX + deltaX;
+                let newTop = item.startY + deltaY;
 
-            activeDragItem.style.left = newLeft + 'px';
-            activeDragItem.style.top = newTop + 'px';
+                newLeft = Math.max(0, Math.min(newLeft, desktop.width - 80));
+                newTop = Math.max(0, Math.min(newTop, desktop.height - 80));
+
+                item.el.style.left = newLeft + 'px';
+                item.el.style.top = newTop + 'px';
+            });
         }
     };
 
     document.onmouseup = () => {
         activeDragItem = null;
         activeDragType = null;
+        dragFolderStartPositions = [];
         document.body.classList.remove('dragging');
     };
 
@@ -873,6 +873,12 @@
         e.preventDefault();
         e.stopPropagation();
         closeAllMenus();
+
+        const folder = document.getElementById(folderId);
+        if (folder && !folder.classList.contains('selected')) {
+            clearDesktopSelections();
+            folder.classList.add('selected');
+        }
 
         selectedFolderId = folderId;
         const menu = document.getElementById('folder-context-menu');

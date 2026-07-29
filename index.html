@@ -197,7 +197,13 @@
         <div class="drop-item" onclick="renameFolderFromContext()">Rename</div>
         <div class="drop-item" onclick="compressFolderFromContext()">Compress (Zip)</div>
         <div class="drop-item" onclick="extractFolderFromContext()">Extract All</div>
-        <div class="drop-item" style="color: #ff3b30;" onclick="deleteFolderFromContext()">Delete</div>
+        <div class="drop-item" style="color: #ff3b30;" onclick="deleteFolderFromContext()">Move to Trash</div>
+    </div>
+
+    <div id="dock-context-menu" class="dropdown" style="position: absolute; z-index: 15000;">
+        <div class="drop-item" onclick="openDockAppFromContext()">Open</div>
+        <div class="drop-item" onclick="dockAppShowInfo()">App Info</div>
+        <div class="drop-item" id="dock-empty-trash-btn" style="color: #ff3b30; display: none;" onclick="emptyTrash()">Empty Trash</div>
     </div>
 
     <div id="menubar">
@@ -246,6 +252,7 @@
                 <div class="drop-item" onclick="openApp('finder')">Go to Finder</div>
                 <div class="drop-item" onclick="openApp('browser')">Go to Web Browser</div>
                 <div class="drop-item" onclick="openApp('terminal')">Go to Shell Terminal</div>
+                <div class="drop-item" onclick="openApp('trash')">Go to Trash</div>
             </div>
         </div>
 
@@ -271,25 +278,27 @@
     </div>
 
     <div id="dock-container"><div id="dock">
-        <div class="dk" title="Finder" onclick="openApp('finder')"><i data-lucide="folder-open"></i></div>
-        <div class="dk" title="Safari" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
-        <div class="dk" title="Paint" onclick="openApp('paint')"><i data-lucide="palette"></i></div>
-        <div class="dk" title="Notes" onclick="openApp('notes')"><i data-lucide="file-text"></i></div>
-        <div class="dk" title="Music" onclick="openApp('music')"><i data-lucide="music"></i></div>
-        <div class="dk" title="Photos" onclick="openApp('photos')"><i data-lucide="image"></i></div>
-        <div class="dk" title="Calculator" onclick="openApp('calc')"><i data-lucide="calculator"></i></div>
-        <div class="dk" title="Calendar" onclick="openApp('calendar')"><i data-lucide="calendar"></i></div>
-        <div class="dk" title="Terminal" onclick="openApp('terminal')"><i data-lucide="terminal"></i></div>
-        <div class="dk" title="Weather" onclick="openApp('weather')"><i data-lucide="cloud-sun"></i></div>
-        <div class="dk" title="Settings" onclick="openApp('settings')"><i data-lucide="settings"></i></div>
-        <div class="dk" title="My Page" onclick="openApp('myPage')"><i data-lucide="link"></i></div>
+        <div class="dk" title="Finder" onclick="openApp('finder')" oncontextmenu="showDockContext(event, 'finder')"><i data-lucide="folder-open"></i></div>
+        <div class="dk" title="Safari" onclick="openApp('browser')" oncontextmenu="showDockContext(event, 'browser')"><i data-lucide="globe"></i></div>
+        <div class="dk" title="Paint" onclick="openApp('paint')" oncontextmenu="showDockContext(event, 'paint')"><i data-lucide="palette"></i></div>
+        <div class="dk" title="Notes" onclick="openApp('notes')" oncontextmenu="showDockContext(event, 'notes')"><i data-lucide="file-text"></i></div>
+        <div class="dk" title="Music" onclick="openApp('music')" oncontextmenu="showDockContext(event, 'music')"><i data-lucide="music"></i></div>
+        <div class="dk" title="Photos" onclick="openApp('photos')" oncontextmenu="showDockContext(event, 'photos')"><i data-lucide="image"></i></div>
+        <div class="dk" title="Calculator" onclick="openApp('calc')" oncontextmenu="showDockContext(event, 'calc')"><i data-lucide="calculator"></i></div>
+        <div class="dk" title="Calendar" onclick="openApp('calendar')" oncontextmenu="showDockContext(event, 'calendar')"><i data-lucide="calendar"></i></div>
+        <div class="dk" title="Terminal" onclick="openApp('terminal')" oncontextmenu="showDockContext(event, 'terminal')"><i data-lucide="terminal"></i></div>
+        <div class="dk" title="Weather" onclick="openApp('weather')" oncontextmenu="showDockContext(event, 'weather')"><i data-lucide="cloud-sun"></i></div>
+        <div class="dk" title="Settings" onclick="openApp('settings')" oncontextmenu="showDockContext(event, 'settings')"><i data-lucide="settings"></i></div>
+        <div class="dk" title="My Page" onclick="openApp('myPage')" oncontextmenu="showDockContext(event, 'myPage')"><i data-lucide="link"></i></div>
+        <div class="dk" title="Trash" onclick="openApp('trash')" oncontextmenu="showDockContext(event, 'trash')"><i data-lucide="trash-2"></i></div>
     </div></div>
 </div>
 
 <script>
     const os = document.getElementById('os'), lock = document.getElementById('lock-screen');
     let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
-    let folderCount = 0, selectedFolderId = null;
+    let folderCount = 0, selectedFolderId = null, selectedDockApp = null;
+    let trashItems = [];
     const today = new Date();
 
     function playMacStartupChime() {
@@ -348,10 +357,46 @@
         }
     }
 
+    function showDockContext(e, appId) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllMenus();
+
+        selectedDockApp = appId;
+        const menu = document.getElementById('dock-context-menu');
+        const emptyTrashBtn = document.getElementById('dock-empty-trash-btn');
+        
+        if (appId === 'trash') {
+            emptyTrashBtn.style.display = 'block';
+        } else {
+            emptyTrashBtn.style.display = 'none';
+        }
+
+        menu.style.left = e.clientX + 'px';
+        menu.style.top = (e.clientY - 80) + 'px';
+        menu.classList.add('active');
+    }
+
+    function openDockAppFromContext() {
+        if (selectedDockApp) {
+            openApp(selectedDockApp);
+            closeContextMenu();
+        }
+    }
+
+    function dockAppShowInfo() {
+        if (selectedDockApp && apps[selectedDockApp]) {
+            alert(`App Name: ${apps[selectedDockApp].title}\nStatus: System Application`);
+            closeContextMenu();
+        }
+    }
+
     function closeContextMenu() {
         document.getElementById('context-menu').classList.remove('active');
         const fMenu = document.getElementById('folder-context-menu');
         if (fMenu) fMenu.classList.remove('active');
+        const dMenu = document.getElementById('dock-context-menu');
+        if (dMenu) dMenu.classList.remove('active');
     }
 
     function createNewFolder(name = null, isZip = false) {
@@ -382,6 +427,81 @@
 
         desktop.appendChild(folderEl);
         lucide.createIcons();
+    }
+
+    /* TRASH SYSTEM FUNCTIONS */
+    function deleteFolderFromContext() {
+        if (!selectedFolderId) return;
+        const folderEl = document.getElementById(selectedFolderId);
+        if (folderEl) {
+            const nameSpan = document.getElementById(`name-${selectedFolderId}`);
+            const folderName = nameSpan ? nameSpan.innerText : 'Folder';
+            
+            trashItems.push({
+                id: selectedFolderId,
+                name: folderName,
+                icon: folderName.endsWith('.zip') ? 'file-archive' : 'folder',
+                left: folderEl.style.left,
+                top: folderEl.style.top
+            });
+            
+            folderEl.remove();
+            refreshTrashUI();
+        }
+        closeContextMenu();
+    }
+
+    function emptyTrash() {
+        trashItems = [];
+        refreshTrashUI();
+        closeContextMenu();
+    }
+
+    function restoreTrashItem(index) {
+        const item = trashItems[index];
+        if (!item) return;
+
+        const desktop = document.getElementById('desktop');
+        const folderEl = document.createElement('div');
+        folderEl.className = 'desktop-folder';
+        folderEl.id = item.id;
+        folderEl.style.left = item.left || '20px';
+        folderEl.style.top = item.top || '20px';
+
+        folderEl.setAttribute('ondblclick', `openFolderWindow('${item.name}')`);
+        folderEl.setAttribute('oncontextmenu', `showFolderContext(event, '${item.id}')`);
+        folderEl.setAttribute('onmousedown', `sDF(event, '${item.id}')`);
+
+        folderEl.innerHTML = `
+            <i data-lucide="${item.icon}"></i>
+            <span id="name-${item.id}">${item.name}</span>
+        `;
+
+        desktop.appendChild(folderEl);
+        trashItems.splice(index, 1);
+        refreshTrashUI();
+        lucide.createIcons();
+    }
+
+    function refreshTrashUI() {
+        const trashContainer = document.getElementById('trash-list-container');
+        if (trashContainer) {
+            trashContainer.innerHTML = renderTrashContent();
+            lucide.createIcons();
+        }
+    }
+
+    function renderTrashContent() {
+        if (trashItems.length === 0) {
+            return `<div style="color:#888; font-size:13px; grid-column:1/-1; text-align:center; padding-top:40px;">Trash is empty</div>`;
+        }
+        return trashItems.map((item, idx) => `
+            <div style="display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px;">
+                <i data-lucide="${item.icon}" style="width:36px; height:36px; color:#5AC8FA;"></i>
+                <span style="font-size:11px; margin-top:4px; color:white; text-align:center;">${escapeHtml(item.name)}</span>
+                <button onclick="restoreTrashItem(${idx})" style="margin-top:8px; font-size:10px; background:#007aff; border:none; color:white; padding:3px 8px; border-radius:4px; cursor:pointer;">Restore</button>
+            </div>
+        `).join('');
     }
 
     /* UNIFIED DRAGGING SYSTEM FOR WINDOWS AND FOLDERS */
@@ -511,13 +631,6 @@
         closeContextMenu();
     }
 
-    function deleteFolderFromContext() {
-        if (!selectedFolderId) return;
-        const folderEl = document.getElementById(selectedFolderId);
-        if (folderEl) folderEl.remove();
-        closeContextMenu();
-    }
-
     function openFolderWindow(title) {
         const windowId = 'folder-' + Date.now();
         const w = document.createElement('div');
@@ -574,6 +687,19 @@
                             <i data-lucide="folder-plus" style="width:36px; height:36px; color:#34c759;"></i>
                             <span style="font-size:11px; margin-top:4px; color:white;">New Folder</span>
                         </div>
+                    </div>
+                </div>`
+        },
+        trash: {
+            title: 'Trash', w: 500, h: 360,
+            content: () => `
+                <div style="display:flex; flex-direction:column; height:100%;">
+                    <div style="padding:10px 15px; background:#2c2c2e; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <span style="font-size:13px; font-weight:bold;">Trash Bin</span>
+                        <button onclick="emptyTrash()" style="background:#ff3b30; border:none; color:white; padding:5px 12px; border-radius:5px; cursor:pointer; font-size:12px; font-weight:600;">Empty Trash</button>
+                    </div>
+                    <div id="trash-list-container" style="flex:1; padding:15px; display:grid; grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:15px; align-content:start;">
+                        ${renderTrashContent()}
                     </div>
                 </div>`
         },
@@ -655,7 +781,7 @@
                         <h4 style="color:#fff;">System Assistant</h4>
                     </div>
                     <div id="assistant-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px; line-height:1.4;">
-                        Hello! I am <b>Assistant</b>. Ask me for the time, date, math problems, or to open apps like <i>"open finder"</i> or <i>"open paint"</i>!
+                        Hello! I am <b>Assistant</b>. Ask me for the time, date, math problems, or to open apps like <i>"open finder"</i>, <i>"open paint"</i>, or <i>"open trash"</i>!
                     </div>
                     <div style="display:flex; gap:5px;">
                         <input id="assistant-in" placeholder="Type a command or query..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendAssistantMsg()">
@@ -688,7 +814,7 @@
                     </div>
                 </div>` 
         },
-        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Click <b>Finder</b> in the dock or menu to browse files.<br>- Right click on desktop/folders for contextual menus.<br>- Drag icons to position them freely.<br>- Double click folders to open their window contents.</p></div>` }
+        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Click <b>Finder</b> in the dock or menu to browse files.<br>- Right click on desktop, dock apps, or folders for contextual menus.<br>- Move items to <b>Trash Bin</b> via folder right-click options.<br>- Double click folders to open their window contents.</p></div>` }
     };
 
     function initPaint() {
@@ -813,6 +939,7 @@
         const lower = q.toLowerCase().trim();
 
         if (lower.includes('finder') || lower.includes('open finder') || lower.includes('file manager')) { openApp('finder'); return "Opening Finder!"; }
+        if (lower.includes('trash') || lower.includes('open trash') || lower.includes('trash bin')) { openApp('trash'); return "Opening Trash!"; }
         if (lower.includes('open paint')) { openApp('paint'); return "Opening Paint!"; }
         if (lower.includes('open safari') || lower.includes('open browser')) { openApp('browser'); return "Opening Safari!"; }
         if (lower.includes('open notes')) { openApp('notes'); return "Opening Notes!"; }
@@ -855,7 +982,7 @@
             }
         } catch (err) {}
 
-        return "Try asking me <i>'open finder'</i>, <i>'what time is it'</i>, or <i>'open paint'</i>!";
+        return "Try asking me <i>'open finder'</i>, <i>'open trash'</i>, <i>'what time is it'</i>, or <i>'open paint'</i>!";
     }
 
     function unlock() { 

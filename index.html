@@ -268,6 +268,7 @@
     </div>
 
     <div id="dock-container"><div id="dock">
+        <div class="dk" title="Finder" onclick="openApp('finder')"><i data-lucide="folder-open"></i></div>
         <div class="dk" title="Safari" onclick="openApp('browser')"><i data-lucide="globe"></i></div>
         <div class="dk" title="Paint" onclick="openApp('paint')"><i data-lucide="palette"></i></div>
         <div class="dk" title="Notes" onclick="openApp('notes')"><i data-lucide="file-text"></i></div>
@@ -542,6 +543,33 @@
     }
 
     const apps = {
+        finder: {
+            title: 'Finder', w: 550, h: 380,
+            content: () => `
+                <div style="display:flex; height:100%;">
+                    <div style="width:150px; background:#25252a; padding:12px; border-right:1px solid rgba(255,255,255,0.1); font-size:12px;">
+                        <div style="color:#8e8e93; font-weight:bold; margin-bottom:8px; font-size:11px;">Favorites</div>
+                        <div style="padding:6px 8px; border-radius:4px; background:rgba(255,255,255,0.12); cursor:pointer; color:white; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="monitor" style="width:14px; height:14px;"></i> Desktop</div>
+                        <div style="padding:6px 8px; border-radius:4px; cursor:pointer; color:#ccc; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="file-text" style="width:14px; height:14px;"></i> Documents</div>
+                        <div style="padding:6px 8px; border-radius:4px; cursor:pointer; color:#ccc; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="download" style="width:14px; height:14px;"></i> Downloads</div>
+                        <div style="padding:6px 8px; border-radius:4px; cursor:pointer; color:#ccc; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="image" style="width:14px; height:14px;"></i> Pictures</div>
+                    </div>
+                    <div style="flex:1; padding:15px; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:15px; align-content:start;">
+                        <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="openApp('notes')">
+                            <i data-lucide="file-text" style="width:36px; height:36px; color:#5AC8FA;"></i>
+                            <span style="font-size:11px; margin-top:4px; color:white;">Notes.txt</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="openApp('photos')">
+                            <i data-lucide="image" style="width:36px; height:36px; color:#ff9500;"></i>
+                            <span style="font-size:11px; margin-top:4px; color:white;">Photos</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="openApp('music')">
+                            <i data-lucide="music" style="width:36px; height:36px; color:#ff3b30;"></i>
+                            <span style="font-size:11px; margin-top:4px; color:white;">Music</span>
+                        </div>
+                    </div>
+                </div>`
+        },
         myPage: {
             title: 'My Page',
             action: () => window.open('https://guns.lol/nextile', '_blank')
@@ -777,6 +805,7 @@
     async function processAssistant(q) {
         const lower = q.toLowerCase().trim();
 
+        if (lower.includes('open finder')) { openApp('finder'); return "Opening Finder!"; }
         if (lower.includes('open paint')) { openApp('paint'); return "Opening Paint!"; }
         if (lower.includes('open safari') || lower.includes('open browser')) { openApp('browser'); return "Opening Safari!"; }
         if (lower.includes('open notes')) { openApp('notes'); return "Opening Notes!"; }

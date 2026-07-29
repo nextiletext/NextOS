@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextOS - by nextile(upd)</title>
+    <title>NextOS - by nextile</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { 
@@ -112,7 +112,7 @@
         
         .m-item { margin-left: 10px; opacity: 0.9; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
         .m-item:hover { background: rgba(255,255,255,0.15); opacity: 1; }
-        .m-bold { font-weight: 700; margin-left: 10px; }
+        .m-bold { font-weight: 700; margin-left: 10px; cursor: pointer; }
 
         /* WINDOWS */
         .win { 
@@ -188,6 +188,7 @@
 
     <div id="context-menu" class="dropdown" style="position: absolute; z-index: 15000;">
         <div class="drop-item" onclick="createNewFolder()">New Folder</div>
+        <div class="drop-item" onclick="openApp('finder')">Open Finder</div>
         <div class="drop-item" onclick="openApp('settings')">Change Wallpaper</div>
     </div>
 
@@ -212,11 +213,12 @@
             <i data-lucide="bot" style="width:17px; height:17px; color:#007aff;"></i>
         </div>
 
-        <span class="m-bold" id="active-app-name">Finder</span>
+        <span class="m-bold" id="active-app-name" onclick="openApp('finder')">Finder</span>
 
         <div class="m-menu-wrapper">
             <span class="m-item" onclick="event.stopPropagation(); toggleMenu('file-dropdown')">File</span>
             <div class="dropdown" id="file-dropdown">
+                <div class="drop-item" onclick="openApp('finder')">New Finder Window</div>
                 <div class="drop-item" onclick="createNewFolder()">New Folder</div>
                 <div class="drop-item" onclick="openApp('terminal')">New Terminal Window</div>
                 <div class="drop-item" onclick="openApp('browser')">New Browser Window</div>
@@ -241,6 +243,7 @@
         <div class="m-menu-wrapper">
             <span class="m-item" onclick="event.stopPropagation(); toggleMenu('go-dropdown')">Go</span>
             <div class="dropdown" id="go-dropdown">
+                <div class="drop-item" onclick="openApp('finder')">Go to Finder</div>
                 <div class="drop-item" onclick="openApp('browser')">Go to Web Browser</div>
                 <div class="drop-item" onclick="openApp('terminal')">Go to Shell Terminal</div>
             </div>
@@ -544,10 +547,10 @@
 
     const apps = {
         finder: {
-            title: 'Finder', w: 550, h: 380,
+            title: 'Finder', w: 620, h: 400,
             content: () => `
                 <div style="display:flex; height:100%;">
-                    <div style="width:150px; background:#25252a; padding:12px; border-right:1px solid rgba(255,255,255,0.1); font-size:12px;">
+                    <div style="width:160px; background:#25252a; padding:12px; border-right:1px solid rgba(255,255,255,0.1); font-size:12px;">
                         <div style="color:#8e8e93; font-weight:bold; margin-bottom:8px; font-size:11px;">Favorites</div>
                         <div style="padding:6px 8px; border-radius:4px; background:rgba(255,255,255,0.12); cursor:pointer; color:white; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="monitor" style="width:14px; height:14px;"></i> Desktop</div>
                         <div style="padding:6px 8px; border-radius:4px; cursor:pointer; color:#ccc; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="file-text" style="width:14px; height:14px;"></i> Documents</div>
@@ -566,6 +569,10 @@
                         <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="openApp('music')">
                             <i data-lucide="music" style="width:36px; height:36px; color:#ff3b30;"></i>
                             <span style="font-size:11px; margin-top:4px; color:white;">Music</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="createNewFolder()">
+                            <i data-lucide="folder-plus" style="width:36px; height:36px; color:#34c759;"></i>
+                            <span style="font-size:11px; margin-top:4px; color:white;">New Folder</span>
                         </div>
                     </div>
                 </div>`
@@ -648,7 +655,7 @@
                         <h4 style="color:#fff;">System Assistant</h4>
                     </div>
                     <div id="assistant-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px; line-height:1.4;">
-                        Hello! I am <b>Assistant</b>. Ask me for the time, date, math problems, or to open apps like <i>"open paint"</i>!
+                        Hello! I am <b>Assistant</b>. Ask me for the time, date, math problems, or to open apps like <i>"open finder"</i> or <i>"open paint"</i>!
                     </div>
                     <div style="display:flex; gap:5px;">
                         <input id="assistant-in" placeholder="Type a command or query..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendAssistantMsg()">
@@ -681,7 +688,7 @@
                     </div>
                 </div>` 
         },
-        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Right click on desktop/folders for contextual menus.<br>- Drag icons to position them freely.<br>- Double click folders to open their window contents.</p></div>` }
+        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Click <b>Finder</b> in the dock or menu to browse files.<br>- Right click on desktop/folders for contextual menus.<br>- Drag icons to position them freely.<br>- Double click folders to open their window contents.</p></div>` }
     };
 
     function initPaint() {
@@ -805,7 +812,7 @@
     async function processAssistant(q) {
         const lower = q.toLowerCase().trim();
 
-        if (lower.includes('open finder')) { openApp('finder'); return "Opening Finder!"; }
+        if (lower.includes('finder') || lower.includes('open finder') || lower.includes('file manager')) { openApp('finder'); return "Opening Finder!"; }
         if (lower.includes('open paint')) { openApp('paint'); return "Opening Paint!"; }
         if (lower.includes('open safari') || lower.includes('open browser')) { openApp('browser'); return "Opening Safari!"; }
         if (lower.includes('open notes')) { openApp('notes'); return "Opening Notes!"; }
@@ -848,7 +855,7 @@
             }
         } catch (err) {}
 
-        return "Try asking me <i>'what time is it'</i>, <i>'open paint'</i>, or <i>'what is Mars'</i>!";
+        return "Try asking me <i>'open finder'</i>, <i>'what time is it'</i>, or <i>'open paint'</i>!";
     }
 
     function unlock() { 
@@ -871,12 +878,19 @@
         const a = apps[id];
         if (!a) return;
 
+        document.getElementById('active-app-name').innerText = a.title;
+
         if (a.action) {
             a.action();
             return;
         }
 
-        if (wins[id]) { wins[id].classList.remove('minimized'); wins[id].style.zIndex = ++zIndex; return; }
+        if (wins[id]) { 
+            wins[id].classList.remove('minimized'); 
+            wins[id].style.zIndex = ++zIndex; 
+            return; 
+        }
+
         const w = document.createElement('div');
         w.className = 'win'; w.id = 'win-'+id; w.style.width = a.w+'px'; w.style.height = a.h+'px';
         w.style.left = '100px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
@@ -909,7 +923,7 @@
         }
         
         root.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:#2c2c2e;">
+            <div style="display:flex; justify-space-between; align-items:center; padding:15px; background:#2c2c2e;">
                 <button onclick="cD(-1)" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="chevron-left"></i></button>
                 <span style="font-weight:600;">${viewDate.toLocaleString('default',{month:'long'})} ${viewDate.getFullYear()}</span>
                 <button onclick="cD(1)" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="chevron-right"></i></button>

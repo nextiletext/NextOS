@@ -37,10 +37,17 @@
             border-radius: 8px;
             padding: 8px 4px;
             user-select: none;
+            border: 1px solid transparent;
         }
 
         .desktop-folder:hover {
             background: rgba(255, 255, 255, 0.15);
+        }
+
+        .desktop-folder.selected {
+            background: rgba(0, 122, 255, 0.4) !important;
+            border: 1px solid rgba(0, 122, 255, 0.8);
+            border-radius: 6px;
         }
 
         .desktop-folder i {
@@ -65,6 +72,16 @@
             padding: 1px 4px;
             -webkit-user-select: text;
             user-select: text;
+        }
+
+        /* Selection box overlay */
+        #selection-box {
+            position: absolute;
+            border: 1px solid rgba(0, 122, 255, 0.8);
+            background: rgba(0, 122, 255, 0.2);
+            pointer-events: none;
+            z-index: 5;
+            display: none;
         }
 
         /* LOCK SCREEN */
@@ -246,7 +263,9 @@
 </div>
 
 <div id="os">
-    <div id="desktop" onclick="closeContextMenu()" oncontextmenu="showContextMenu(event)"></div>
+    <div id="desktop" onclick="handleDesktopClick(event)" oncontextmenu="showContextMenu(event)">
+        <div id="selection-box"></div>
+    </div>
 
     <div id="context-menu" class="dropdown" style="position: absolute; z-index: 15000;">
         <div class="drop-item" onclick="createNewFolder()">New Folder</div>
@@ -296,8 +315,8 @@
         <div class="m-menu-wrapper">
             <span class="m-item" onclick="event.stopPropagation(); toggleMenu('edit-dropdown')">Edit</span>
             <div class="dropdown" id="edit-dropdown">
-                <div class="drop-item" onclick="alert('Undo action')">Undo</div>
-                <div class="drop-item" onclick="alert('Redo action')">Redo</div>
+                <div class="drop-item" onclick="selectAllDesktopFolders()">Select All Desktop Items</div>
+                <div class="drop-item" onclick="deleteSelectedDesktopFolders()">Delete Selected</div>
             </div>
         </div>
 
@@ -363,6 +382,7 @@
     let trashItems = [];
     let isLightMode = false;
     let activeFinderTab = 'desktop';
+    let desktopCreatedFolders = [];
     const today = new Date();
 
     function playMacStartupChime() {
@@ -432,6 +452,122 @@
         ]
     };
 
+    /* DESKTOP SELECTION & MULTI-SELECT FUNCTIONS */
+    let isSelecting = false;
+    let selectStartX = 0, selectStartY = 0;
+
+    const desktopEl = document.getElementById('desktop');
+    const selectionBox = document.getElementById('selection-box');
+
+    desktopEl.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.desktop-folder') || e.button !== 0) return;
+        isSelecting = true;
+        const rect = desktopEl.getBoundingClientRect();
+        selectStartX = e.clientX - rect.left;
+        selectStartY = e.clientY - rect.top;
+
+        selectionBox.style.left = selectStartX + 'px';
+        selectionBox.style.top = selectStartY + 'px';
+        selectionBox.style.width = '0px';
+        selectionBox.style.height = '0px';
+        selectionBox.style.display = 'block';
+
+        if (!e.shiftKey && !e.ctrlKey && !e.metaKey) {
+            clearDesktopSelections();
+        }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isSelecting) return;
+        const rect = desktopEl.getBoundingClientRect();
+        const currentX = e.clientX - rect.left;
+        const currentY = e.clientY - rect.top;
+
+        const left = Math.min(selectStartX, currentX);
+        const top = Math.min(selectStartY, currentY);
+        const width = Math.abs(currentX - selectStartX);
+        const height = Math.abs(currentY - selectStartY);
+
+        selectionBox.style.left = left + 'px';
+        selectionBox.style.top = top + 'px';
+        selectionBox.style.width = width + 'px';
+        selectionBox.style.height = height + 'px';
+
+        const boxRect = selectionBox.getBoundingClientRect();
+        document.querySelectorAll('.desktop-folder').forEach(folder => {
+            const fRect = folder.getBoundingClientRect();
+            const overlap = !(boxRect.right < fRect.left || 
+                              boxRect.left > fRect.right || 
+                              boxRect.bottom < fRect.top || 
+                              boxRect.top > fRect.bottom);
+            if (overlap) {
+                folder.classList.add('selected');
+            } else if (!e.shiftKey) {
+                folder.classList.remove('selected');
+            }
+        });
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isSelecting) {
+            isSelecting = false;
+            selectionBox.style.display = 'none';
+        }
+    });
+
+    function handleDesktopClick(e) {
+        if (e.target.id === 'desktop') {
+            clearDesktopSelections();
+        }
+    }
+
+    function clearDesktopSelections() {
+        document.querySelectorAll('.desktop-folder').forEach(f => f.classList.remove('selected'));
+    }
+
+    function selectAllDesktopFolders() {
+        document.querySelectorAll('.desktop-folder').forEach(f => f.classList.add('selected'));
+    }
+
+    function deleteSelectedDesktopFolders() {
+        const selected = document.querySelectorAll('.desktop-folder.selected');
+        selected.forEach(folder => {
+            const id = folder.id;
+            const nameSpan = document.getElementById(`name-${id}`);
+            const folderName = nameSpan ? nameSpan.innerText : 'Folder';
+
+            trashItems.push({
+                id: id,
+                name: folderName,
+                icon: folderName.endsWith('.zip') ? 'file-archive' : 'folder',
+                left: folder.style.left,
+                top: folder.style.top
+            });
+
+            desktopCreatedFolders = desktopCreatedFolders.filter(f => f.id !== id);
+            folder.remove();
+        });
+        refreshTrashUI();
+        if (activeFinderTab === 'desktop') switchFinderTab('desktop');
+    }
+
+    // KEYBOARD SHORTCUTS: Ctrl/Cmd + A to Select All, Delete/Backspace to remove selected desktop folders
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+            const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+            if (activeTag !== 'input' && activeTag !== 'textarea' && !document.activeElement.isContentEditable) {
+                e.preventDefault();
+                selectAllDesktopFolders();
+            }
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+            if (activeTag !== 'input' && activeTag !== 'textarea' && !document.activeElement.isContentEditable) {
+                deleteSelectedDesktopFolders();
+            }
+        }
+    });
+
     /* LIGHT MODE TOGGLE */
     function toggleLightMode() {
         isLightMode = !isLightMode;
@@ -446,7 +582,7 @@
         }
     }
 
-    /* FINDER NAVIGATION */
+    /* FINDER NAVIGATION & DESKTOP SYNC */
     function switchFinderTab(tab) {
         activeFinderTab = tab;
         const container = document.getElementById('finder-files-container');
@@ -463,7 +599,19 @@
         });
 
         if (container) {
-            const files = finderData[tab] || [];
+            let files = finderData[tab] ? [...finderData[tab]] : [];
+            
+            if (tab === 'desktop') {
+                desktopCreatedFolders.forEach(df => {
+                    files.push({
+                        name: df.name,
+                        icon: df.isZip ? 'file-archive' : 'folder',
+                        color: df.isZip ? '#ff9500' : '#5AC8FA',
+                        action: `openFolderWindow('${df.name}')`
+                    });
+                });
+            }
+
             container.innerHTML = files.map(f => `
                 <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="${f.action}">
                     <i data-lucide="${f.icon}" style="width:36px; height:36px; color:${f.color};"></i>
@@ -560,6 +708,9 @@
         `;
 
         desktop.appendChild(folderEl);
+        desktopCreatedFolders.push({ id: folderId, name: defaultName, isZip: isZip });
+        
+        if (activeFinderTab === 'desktop') switchFinderTab('desktop');
         lucide.createIcons();
     }
 
@@ -578,9 +729,11 @@
                 left: folderEl.style.left,
                 top: folderEl.style.top
             });
-            
+
+            desktopCreatedFolders = desktopCreatedFolders.filter(f => f.id !== selectedFolderId);
             folderEl.remove();
             refreshTrashUI();
+            if (activeFinderTab === 'desktop') switchFinderTab('desktop');
         }
         closeContextMenu();
     }
@@ -612,8 +765,10 @@
         `;
 
         desktop.appendChild(folderEl);
+        desktopCreatedFolders.push({ id: item.id, name: item.name, isZip: item.name.endsWith('.zip') });
         trashItems.splice(index, 1);
         refreshTrashUI();
+        if (activeFinderTab === 'desktop') switchFinderTab('desktop');
         lucide.createIcons();
     }
 
@@ -664,6 +819,11 @@
         if (e.button !== 0 || e.target.getAttribute('contenteditable') === 'true') return;
         const folder = document.getElementById(folderId);
         if (!folder) return;
+
+        if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !folder.classList.contains('selected')) {
+            clearDesktopSelections();
+        }
+        folder.classList.add('selected');
 
         activeDragItem = folder;
         activeDragType = 'folder';
@@ -746,6 +906,9 @@
             if (e.key === 'Enter') {
                 e.preventDefault();
                 nameSpan.contentEditable = "false";
+                const df = desktopCreatedFolders.find(item => item.id === selectedFolderId);
+                if (df) df.name = nameSpan.innerText;
+                if (activeFinderTab === 'desktop') switchFinderTab('desktop');
             }
         };
     }
@@ -805,16 +968,6 @@
                         <div class="finder-sidebar-item" data-tab="pictures" onclick="switchFinderTab('pictures')" style="padding:6px 8px; border-radius:4px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="image" style="width:14px; height:14px;"></i> Pictures</div>
                     </div>
                     <div id="finder-files-container" style="flex:1; padding:15px; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:15px; align-content:start;">
-                        ${finderData.desktop.map(f => `
-                            <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="${f.action}">
-                                <i data-lucide="${f.icon}" style="width:36px; height:36px; color:${f.color};"></i>
-                                <span style="font-size:11px; margin-top:4px; text-align:center;">${f.name}</span>
-                            </div>
-                        `).join('')}
-                        <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="createNewFolder()">
-                            <i data-lucide="folder-plus" style="width:36px; height:36px; color:#34c759;"></i>
-                            <span style="font-size:11px; margin-top:4px; text-align:center;">New Folder</span>
-                        </div>
                     </div>
                 </div>`
         },

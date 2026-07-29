@@ -104,7 +104,7 @@
         .dropdown { position: absolute; top: 28px; left: 0; width: 180px; background: rgba(35, 35, 40, 0.98); border-radius: 6px; border: 0.5px solid rgba(255,255,255,0.1); padding: 5px; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10001; }
         .dropdown.active { display: block; }
         .drop-item { padding: 5px 12px; border-radius: 4px; font-size: 13px; color: white; cursor: pointer; }
-        .drop-item:hover { background: #007aff; }
+        .drop-item:hover { background: #007aff; color: white !important; }
 
         .m-menu-wrapper { position: relative; display: inline-block; }
         .gemini-btn { display: flex; align-items: center; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: background 0.2s; }
@@ -114,7 +114,7 @@
         .m-item:hover { background: rgba(255,255,255,0.15); opacity: 1; }
         .m-bold { font-weight: 700; margin-left: 10px; cursor: pointer; }
 
-        /* WINDOWS */
+        /* WINDOWS & TITLES */
         .win { 
             position: absolute; 
             border-radius: 12px; 
@@ -132,6 +132,14 @@
         .win.fullscreen { width: 100vw !important; height: calc(100vh - 28px) !important; top: 28px !important; left: 0 !important; border-radius: 0; }
         .win-bar { height: 38px; display: flex; align-items: center; padding: 0 12px; cursor: move; background: rgba(255, 255, 255, 0.05); }
         
+        .win-title {
+            margin: auto;
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffffff;
+            transition: color 0.2s ease;
+        }
+
         .traffic-lights { display: flex; gap: 8px; margin-right: 15px; }
         .tb { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; color: transparent; font-weight: bold; }
         .win-bar:hover .tb { color: rgba(0,0,0,0.6); }
@@ -173,6 +181,60 @@
         /* PAINT APP STYLES */
         .paint-toolbar { display: flex; gap: 10px; align-items: center; padding: 8px; background: #2c2c2e; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .paint-btn { padding: 4px 8px; background: #007aff; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px; }
+
+        /* LIGHT MODE SPECIFIC STYLES */
+        body.light-mode #menubar {
+            background: rgba(235, 235, 240, 0.92);
+            color: #1c1c1e;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.15);
+        }
+        body.light-mode .dropdown {
+            background: rgba(245, 245, 250, 0.98);
+            border: 0.5px solid rgba(0,0,0,0.15);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        body.light-mode .drop-item {
+            color: #1c1c1e;
+        }
+        body.light-mode .win {
+            background: rgba(240, 240, 245, 0.98);
+            border: 0.5px solid rgba(0, 0, 0, 0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        body.light-mode .win-bar {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        body.light-mode .win-title {
+            color: #000000 !important;
+        }
+        body.light-mode .win-content {
+            background: #f2f2f7;
+            color: #1c1c1e;
+        }
+        body.light-mode .finder-sidebar {
+            background: #e5e5ea !important;
+            border-right: 1px solid rgba(0,0,0,0.1) !important;
+        }
+        body.light-mode .browser-nav, body.light-mode .paint-toolbar {
+            background: #e5e5ea;
+            color: #1c1c1e;
+        }
+        body.light-mode .browser-url {
+            background: #ffffff;
+            color: #1c1c1e;
+            border: 1px solid #d1d1d6;
+        }
+        body.light-mode #dock-container {
+            background: rgba(255, 255, 255, 0.4);
+            border: 0.5px solid rgba(255, 255, 255, 0.6);
+        }
+        body.light-mode .dk {
+            background: rgba(0,0,0,0.08);
+            color: #1c1c1e;
+        }
+        body.light-mode .dk:hover {
+            background: rgba(0,0,0,0.18);
+        }
     </style>
 </head>
 <body onclick="closeAllMenus(); closeContextMenu();">
@@ -242,7 +304,7 @@
         <div class="m-menu-wrapper">
             <span class="m-item" onclick="event.stopPropagation(); toggleMenu('view-dropdown')">View</span>
             <div class="dropdown" id="view-dropdown">
-                <div class="drop-item" onclick="toggleDarkMode()">Toggle Theme Accent</div>
+                <div class="drop-item" onclick="toggleLightMode()">Toggle Light/Dark Theme</div>
             </div>
         </div>
 
@@ -299,6 +361,8 @@
     let zIndex = 1000, wins = {}, viewDate = new Date(), calcVal = "";
     let folderCount = 0, selectedFolderId = null, selectedDockApp = null;
     let trashItems = [];
+    let isLightMode = false;
+    let activeFinderTab = 'desktop';
     const today = new Date();
 
     function playMacStartupChime() {
@@ -344,6 +408,76 @@
         { name: "Chillhop Beats", url: "https://stream.zeno.fm/0r0xa792kwzuv" },
         { name: "Acoustic Breeze", url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" }
     ];
+
+    const finderData = {
+        desktop: [
+            { name: 'Notes.txt', icon: 'file-text', color: '#5AC8FA', action: "openApp('notes')" },
+            { name: 'Photos', icon: 'image', color: '#ff9500', action: "openApp('photos')" },
+            { name: 'Music', icon: 'music', color: '#ff3b30', action: "openApp('music')" }
+        ],
+        documents: [
+            { name: 'Project_Proposal.docx', icon: 'file-text', color: '#007aff', action: "alert('Opening Project_Proposal.docx')" },
+            { name: 'Resume_2026.pdf', icon: 'file', color: '#ff3b30', action: "alert('Opening Resume_2026.pdf')" },
+            { name: 'Budget_Report.xlsx', icon: 'file-spreadsheet', color: '#34c759', action: "alert('Opening Budget_Report.xlsx')" }
+        ],
+        downloads: [
+            { name: 'Software_Setup.dmg', icon: 'disc', color: '#8e8e93', action: "alert('Opening Software_Setup.dmg')" },
+            { name: 'Archive_Files.zip', icon: 'file-archive', color: '#ff9500', action: "alert('Opening Archive_Files.zip')" },
+            { name: 'Audio_Track.mp3', icon: 'music', color: '#ff2d55', action: "openApp('music')" }
+        ],
+        pictures: [
+            { name: 'Sunset_View.png', icon: 'image', color: '#ff9500', action: "openApp('photos')" },
+            { name: 'Mountain_Peak.jpg', icon: 'image', color: '#5AC8FA', action: "openApp('photos')" },
+            { name: 'Beach_Resort.jpg', icon: 'image', color: '#34c759', action: "openApp('photos')" }
+        ]
+    };
+
+    /* LIGHT MODE TOGGLE */
+    function toggleLightMode() {
+        isLightMode = !isLightMode;
+        if (isLightMode) {
+            document.body.classList.add('light-mode');
+        } else {
+            document.body.classList.remove('light-mode');
+        }
+        const toggleBtn = document.getElementById('light-mode-toggle-btn');
+        if (toggleBtn) {
+            toggleBtn.innerText = isLightMode ? "Switch to Dark Mode" : "Switch to Light Mode";
+        }
+    }
+
+    /* FINDER NAVIGATION */
+    function switchFinderTab(tab) {
+        activeFinderTab = tab;
+        const container = document.getElementById('finder-files-container');
+        const items = document.querySelectorAll('.finder-sidebar-item');
+
+        items.forEach(item => {
+            if (item.dataset.tab === tab) {
+                item.style.background = isLightMode ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)';
+                item.style.fontWeight = 'bold';
+            } else {
+                item.style.background = 'transparent';
+                item.style.fontWeight = 'normal';
+            }
+        });
+
+        if (container) {
+            const files = finderData[tab] || [];
+            container.innerHTML = files.map(f => `
+                <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="${f.action}">
+                    <i data-lucide="${f.icon}" style="width:36px; height:36px; color:${f.color};"></i>
+                    <span style="font-size:11px; margin-top:4px; text-align:center;">${f.name}</span>
+                </div>
+            `).join('') + `
+                <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="createNewFolder()">
+                    <i data-lucide="folder-plus" style="width:36px; height:36px; color:#34c759;"></i>
+                    <span style="font-size:11px; margin-top:4px; text-align:center;">New Folder</span>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+    }
 
     /* DESKTOP CONTEXT MENU & FOLDERS */
     function showContextMenu(e) {
@@ -498,7 +632,7 @@
         return trashItems.map((item, idx) => `
             <div style="display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px;">
                 <i data-lucide="${item.icon}" style="width:36px; height:36px; color:#5AC8FA;"></i>
-                <span style="font-size:11px; margin-top:4px; color:white; text-align:center;">${escapeHtml(item.name)}</span>
+                <span style="font-size:11px; margin-top:4px; text-align:center;">${escapeHtml(item.name)}</span>
                 <button onclick="restoreTrashItem(${idx})" style="margin-top:8px; font-size:10px; background:#007aff; border:none; color:white; padding:3px 8px; border-radius:4px; cursor:pointer;">Restore</button>
             </div>
         `).join('');
@@ -647,9 +781,9 @@
                 <div class="traffic-lights">
                     <button class="tb tb-close" onclick="cA('${windowId}')"></button>
                 </div>
-                <span style="margin:auto; font-size:12px; font-weight:600;">${title}</span>
+                <span class="win-title">${title}</span>
             </div>
-            <div class="win-content" style="padding:20px; color:#aaa; font-size:13px; text-align:center;">
+            <div class="win-content" style="padding:20px; font-size:13px; text-align:center;">
                 This folder is empty.
             </div>
         `;
@@ -663,29 +797,23 @@
             title: 'Finder', w: 620, h: 400,
             content: () => `
                 <div style="display:flex; height:100%;">
-                    <div style="width:160px; background:#25252a; padding:12px; border-right:1px solid rgba(255,255,255,0.1); font-size:12px;">
+                    <div class="finder-sidebar" style="width:160px; background:#25252a; padding:12px; border-right:1px solid rgba(255,255,255,0.1); font-size:12px;">
                         <div style="color:#8e8e93; font-weight:bold; margin-bottom:8px; font-size:11px;">Favorites</div>
-                        <div style="padding:6px 8px; border-radius:4px; background:rgba(255,255,255,0.12); cursor:pointer; color:white; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="monitor" style="width:14px; height:14px;"></i> Desktop</div>
-                        <div style="padding:6px 8px; border-radius:4px; cursor:pointer; color:#ccc; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="file-text" style="width:14px; height:14px;"></i> Documents</div>
-                        <div style="padding:6px 8px; border-radius:4px; cursor:pointer; color:#ccc; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="download" style="width:14px; height:14px;"></i> Downloads</div>
-                        <div style="padding:6px 8px; border-radius:4px; cursor:pointer; color:#ccc; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="image" style="width:14px; height:14px;"></i> Pictures</div>
+                        <div class="finder-sidebar-item" data-tab="desktop" onclick="switchFinderTab('desktop')" style="padding:6px 8px; border-radius:4px; background:rgba(255,255,255,0.18); font-weight:bold; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="monitor" style="width:14px; height:14px;"></i> Desktop</div>
+                        <div class="finder-sidebar-item" data-tab="documents" onclick="switchFinderTab('documents')" style="padding:6px 8px; border-radius:4px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="file-text" style="width:14px; height:14px;"></i> Documents</div>
+                        <div class="finder-sidebar-item" data-tab="downloads" onclick="switchFinderTab('downloads')" style="padding:6px 8px; border-radius:4px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="download" style="width:14px; height:14px;"></i> Downloads</div>
+                        <div class="finder-sidebar-item" data-tab="pictures" onclick="switchFinderTab('pictures')" style="padding:6px 8px; border-radius:4px; cursor:pointer; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><i data-lucide="image" style="width:14px; height:14px;"></i> Pictures</div>
                     </div>
-                    <div style="flex:1; padding:15px; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:15px; align-content:start;">
-                        <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="openApp('notes')">
-                            <i data-lucide="file-text" style="width:36px; height:36px; color:#5AC8FA;"></i>
-                            <span style="font-size:11px; margin-top:4px; color:white;">Notes.txt</span>
-                        </div>
-                        <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="openApp('photos')">
-                            <i data-lucide="image" style="width:36px; height:36px; color:#ff9500;"></i>
-                            <span style="font-size:11px; margin-top:4px; color:white;">Photos</span>
-                        </div>
-                        <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="openApp('music')">
-                            <i data-lucide="music" style="width:36px; height:36px; color:#ff3b30;"></i>
-                            <span style="font-size:11px; margin-top:4px; color:white;">Music</span>
-                        </div>
+                    <div id="finder-files-container" style="flex:1; padding:15px; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:15px; align-content:start;">
+                        ${finderData.desktop.map(f => `
+                            <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="${f.action}">
+                                <i data-lucide="${f.icon}" style="width:36px; height:36px; color:${f.color};"></i>
+                                <span style="font-size:11px; margin-top:4px; text-align:center;">${f.name}</span>
+                            </div>
+                        `).join('')}
                         <div style="display:flex; flex-direction:column; align-items:center; cursor:pointer;" onclick="createNewFolder()">
                             <i data-lucide="folder-plus" style="width:36px; height:36px; color:#34c759;"></i>
-                            <span style="font-size:11px; margin-top:4px; color:white;">New Folder</span>
+                            <span style="font-size:11px; margin-top:4px; text-align:center;">New Folder</span>
                         </div>
                     </div>
                 </div>`
@@ -694,7 +822,7 @@
             title: 'Trash', w: 500, h: 360,
             content: () => `
                 <div style="display:flex; flex-direction:column; height:100%;">
-                    <div style="padding:10px 15px; background:#2c2c2e; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1);">
+                    <div style="padding:10px 15px; background:rgba(0,0,0,0.1); display:flex; justify-space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1);">
                         <span style="font-size:13px; font-weight:bold;">Trash Bin</span>
                         <button onclick="emptyTrash()" style="background:#ff3b30; border:none; color:white; padding:5px 12px; border-radius:5px; cursor:pointer; font-size:12px; font-weight:600;">Empty Trash</button>
                     </div>
@@ -727,7 +855,7 @@
             title: 'Notes', w: 400, h: 400,
             content: () => `
                 <div style="display:flex; flex-direction:column; height:100%; padding:10px;">
-                    <textarea id="notes-input" placeholder="Type your notes here..." style="flex:1; width:100%; background:#121215; border:none; color:white; padding:12px; border-radius:8px; outline:none; resize:none; font-family:sans-serif;" oninput="localStorage.setItem('nextos_notes', this.value)"></textarea>
+                    <textarea id="notes-input" placeholder="Type your notes here..." style="flex:1; width:100%; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); color:inherit; padding:12px; border-radius:8px; outline:none; resize:none; font-family:sans-serif;" oninput="localStorage.setItem('nextos_notes', this.value)"></textarea>
                 </div>`
         },
         music: {
@@ -762,7 +890,7 @@
             title: 'Photos', w: 500, h: 450,
             content: () => `
                 <div style="position:relative; height:100%; display:flex; flex-direction:column;">
-                    <div style="padding:10px 15px; background:#2a2a30; font-size:13px; font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.1);">Scenery Gallery</div>
+                    <div style="padding:10px 15px; background:rgba(0,0,0,0.1); font-size:13px; font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.1);">Scenery Gallery</div>
                     <div class="photo-grid" style="flex:1; overflow-y:auto;">
                         ${photosList.map(url => `<div class="photo-card" style="background-image:url('${url}');" onclick="previewPhoto('${url}')"></div>`).join('')}
                     </div>
@@ -775,16 +903,16 @@
         assistant: {
             title: 'Assistant', w: 420, h: 520,
             content: () => `
-                <div style="display:flex; flex-direction:column; height:100%; padding:15px; background:#1e1e24;">
+                <div style="display:flex; flex-direction:column; height:100%; padding:15px;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
                         <i data-lucide="bot" style="width:22px; height:22px; color:#007aff;"></i>
-                        <h4 style="color:#fff;">System Assistant</h4>
+                        <h4>System Assistant</h4>
                     </div>
-                    <div id="assistant-chat" style="flex:1; overflow-y:auto; background:#121215; border-radius:8px; padding:10px; font-size:13px; color:#ddd; margin-bottom:10px; line-height:1.4;">
+                    <div id="assistant-chat" style="flex:1; overflow-y:auto; background:rgba(0,0,0,0.2); border-radius:8px; padding:10px; font-size:13px; margin-bottom:10px; line-height:1.4;">
                         Hello! I am <b>Assistant</b>. Ask me for the time, date, math problems, or to open apps like <i>"open finder"</i>, <i>"open paint"</i>, or <i>"open trash"</i>!
                     </div>
                     <div style="display:flex; gap:5px;">
-                        <input id="assistant-in" placeholder="Type a command or query..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#2a2a30; color:white; outline:none;" onkeydown="if(event.key==='Enter') sendAssistantMsg()">
+                        <input id="assistant-in" placeholder="Type a command or query..." style="flex:1; padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.2); color:inherit; outline:none;" onkeydown="if(event.key==='Enter') sendAssistantMsg()">
                         <button onclick="sendAssistantMsg()" style="padding:8px 12px; background:#007aff; border:none; border-radius:6px; color:white; cursor:pointer;">Send</button>
                     </div>
                 </div>`
@@ -793,28 +921,31 @@
             title: 'Calculator', 
             w: 300, 
             h: 420, 
-            content: () => `<div id="d" style="padding:20px; font-size:36px; text-align:right; height:70px; background:#111; color:white; overflow:hidden;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/", "7","8","9","*", "4","5","6","-", "1","2","3","+", "0","00",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.5px solid #2c2c2e; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333; color:white; font-weight:bold; user-select:none;">${b}</div>`).join('')}</div>` 
+            content: () => `<div id="d" style="padding:20px; font-size:36px; text-align:right; height:70px; background:#111; color:white; overflow:hidden;">0</div><div style="display:grid; grid-template-columns:repeat(4,1fr); height:calc(100% - 70px);">${["C","±","%","/", "7","8","9","*", "4","5","6","-", "1","2","3","+", "0","00",".","="].map(b=>`<div onclick="hC('${b}')" style="border:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; cursor:pointer; background:#333; color:white; font-weight:bold; user-select:none;">${b}</div>`).join('')}</div>` 
         },
         calendar: { title: 'Calendar', w: 350, h: 420, content: () => `<div id="cal-root"></div>` },
-        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v16.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
+        terminal: { title: 'Terminal', w: 600, h: 350, content: () => `<div style="padding:10px; color:#0f0; background:#000; font-family:monospace; height:100%; overflow-y:auto;"><div id="log">NextOS Shell [v16.0]</div><div style="display:flex;">> <input id="ti" onkeydown="if(event.key==='Enter') {document.getElementById('log').innerHTML+='<br>> '+this.value; this.value='';}" style="background:none; border:none; color:#0f0; outline:none; flex:1; margin-left:5px;"></div></div>` },
         weather: { 
             title: 'Weather', w: 450, h: 550, 
             content: () => `<iframe src="https://nextiletext.github.io/Weather-app3/" style="width:100%; height:100%; border:none; background:#1c1c1e;"></iframe>` 
         },
         settings: { 
-            title: 'Settings', w: 420, h: 420, 
+            title: 'Settings', w: 420, h: 480, 
             content: () => `
                 <div style="padding:20px;">
+                    <h3 style="margin-bottom:8px; font-size:15px;">Appearance</h3>
+                    <button id="light-mode-toggle-btn" onclick="toggleLightMode()" style="padding:8px 16px; background:#007aff; border:none; border-radius:6px; color:white; cursor:pointer; font-weight:600; font-size:13px;">${isLightMode ? 'Switch to Dark Mode' : 'Switch to Light Mode'}</button>
+                    <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:20px 0;">
                     <h3 style="margin-bottom:8px; font-size:15px;">Display Brightness</h3>
                     <input type="range" min="0.3" max="1" step="0.01" value="1" oninput="document.documentElement.style.setProperty('--brightness', this.value)" style="width:100%; accent-color:#007aff;">
-                    <hr style="border:0; border-top:1px solid #3a3a3c; margin:20px 0;">
+                    <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:20px 0;">
                     <h3 style="margin-bottom:8px; font-size:15px;">Wallpaper Themes</h3>
                     <div class="theme-grid">
                         ${themes.map((t, index) => `<div class="theme-card" style="background-image:url('${t.url}');" onclick="setThemeByIndex(${index})"><span>${t.name}</span></div>`).join('')}
                     </div>
                 </div>` 
         },
-        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px; color:#eee;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Click <b>Finder</b> in the dock or menu to browse files.<br>- Right click on desktop, dock apps, or folders for contextual menus.<br>- Move items to <b>Trash Bin</b> via folder right-click options.<br>- Double click folders to open their window contents.</p></div>` }
+        help: { title: 'Help Guide', w: 400, h: 300, content: () => `<div style="padding:20px;"><h3>NextOS Guide</h3><p style="margin-top:10px; font-size:13px; line-height:1.5;">- Click <b>Finder</b> in the dock or menu to browse files.<br>- Right click on desktop, dock apps, or folders for contextual menus.<br>- Move items to <b>Trash Bin</b> via folder right-click options.<br>- Double click folders to open their window contents.</p></div>` }
     };
 
     function initPaint() {
@@ -920,7 +1051,7 @@
         chat.scrollTop = chat.scrollHeight;
 
         const loadingId = 'loading-' + Date.now();
-        chat.innerHTML += `<div id="${loadingId}" style="margin-top:8px; color:#aaa;"><b>Assistant:</b> <i>Processing...</i></div>`;
+        chat.innerHTML += `<div id="${loadingId}" style="margin-top:8px; opacity:0.8;"><b>Assistant:</b> <i>Processing...</i></div>`;
         chat.scrollTop = chat.scrollHeight;
 
         const reply = await processAssistant(query);
@@ -997,7 +1128,6 @@
     function closeAllMenus() { document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active')); }
     function minimizeAll() { Object.keys(wins).forEach(id => minA(id)); }
     function closeAllApps() { Object.keys(wins).forEach(id => cA(id)); }
-    function toggleDarkMode() { alert('Theme updated!'); }
     function loadSearch(url) { document.getElementById('browser-frame').src = url; }
 
     function openApp(id) {
@@ -1021,11 +1151,12 @@
         const w = document.createElement('div');
         w.className = 'win'; w.id = 'win-'+id; w.style.width = a.w+'px'; w.style.height = a.h+'px';
         w.style.left = '100px'; w.style.top = '100px'; w.style.zIndex = ++zIndex;
-        w.innerHTML = `<div class="win-bar" onmousedown="sD(event,'${id}')"><div class="traffic-lights"><button class="tb tb-close" onclick="cA('${id}')"></button><button class="tb tb-min" onclick="minA('${id}')"></button><button class="tb tb-max" onclick="tF('${id}')"></button></div><span style="margin:auto; font-size:12px; font-weight:600;">${a.title}</span></div><div class="win-content">${a.content()}</div>`;
+        w.innerHTML = `<div class="win-bar" onmousedown="sD(event,'${id}')"><div class="traffic-lights"><button class="tb tb-close" onclick="cA('${id}')"></button><button class="tb tb-min" onclick="minA('${id}')"></button><button class="tb tb-max" onclick="tF('${id}')"></button></div><span class="win-title">${a.title}</span></div><div class="win-content">${a.content()}</div>`;
         os.appendChild(w); wins[id] = w;
         
         if(id === 'calendar') rC();
         if(id === 'paint') setTimeout(initPaint, 50);
+        if(id === 'finder') switchFinderTab(activeFinderTab);
         if(id === 'notes') {
             const saved = localStorage.getItem('nextos_notes');
             if(saved) document.getElementById('notes-input').value = saved;
@@ -1040,22 +1171,22 @@
         const isCurrentMonth = viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear();
         
         const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-        let dayHeadersHtml = weekdays.map(day => `<div style="font-weight:bold; color:#8e8e93; font-size:12px; padding:6px 0;">${day}</div>`).join('');
+        let dayHeadersHtml = weekdays.map(day => `<div style="font-weight:bold; opacity:0.6; font-size:12px; padding:6px 0;">${day}</div>`).join('');
         
         let gridHtml = '';
         for(let i=0; i<startDay; i++) gridHtml += `<div></div>`;
         for(let i=1; i<=monthDays; i++) {
-            const blue = (isCurrentMonth && i === today.getDate()) ? 'background:#007aff; border-radius:50%; font-weight:bold;' : '';
+            const blue = (isCurrentMonth && i === today.getDate()) ? 'background:#007aff; color:white; border-radius:50%; font-weight:bold;' : '';
             gridHtml += `<div style="padding:8px; ${blue}">${i}</div>`;
         }
         
         root.innerHTML = `
-            <div style="display:flex; justify-space-between; align-items:center; padding:15px; background:#2c2c2e;">
-                <button onclick="cD(-1)" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="chevron-left"></i></button>
+            <div style="display:flex; justify-space-between; align-items:center; padding:15px; background:rgba(0,0,0,0.1);">
+                <button onclick="cD(-1)" style="background:none; border:none; color:inherit; cursor:pointer;"><i data-lucide="chevron-left"></i></button>
                 <span style="font-weight:600;">${viewDate.toLocaleString('default',{month:'long'})} ${viewDate.getFullYear()}</span>
-                <button onclick="cD(1)" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="chevron-right"></i></button>
+                <button onclick="cD(1)" style="background:none; border:none; color:inherit; cursor:pointer;"><i data-lucide="chevron-right"></i></button>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(7,1fr); padding:10px 10px 0 10px; text-align:center; border-bottom:0.5px solid #3a3a3c;">
+            <div style="display:grid; grid-template-columns:repeat(7,1fr); padding:10px 10px 0 10px; text-align:center; border-bottom:0.5px solid rgba(255,255,255,0.1);">
                 ${dayHeadersHtml}
             </div>
             <div style="display:grid; grid-template-columns:repeat(7,1fr); padding:10px; text-align:center; font-size:13px;">

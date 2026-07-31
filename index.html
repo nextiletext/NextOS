@@ -1497,34 +1497,34 @@
     window.onload = () => lucide.createIcons();
   function launchPositivitySpam() {
     const compliments = [
-        "YOU HAVE BEEN HACKED",
-        "YOU HAVE BEEN HACKED",
-        "YOU HAVE BEEN HACKED",
-        "YOU HAVE BEEN HACKED",
-        "YOU HAVE BEEN HACKED",
-        "YOU HAVE BEEN HACKED",
-        "YOU HAVE BEEN HACKED",
-        "YOU HAVE BEEN HACKED",
-        "YOU HAVE BEEN HACKED"
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!"
     ];
 
     const colors = ['#ff0055', '#00e5ff', '#76ff03', '#ffea00', '#d500f9'];
+    const baseAudio = new Audio('https://www.myinstants.com/media/sounds/windows-xp-error.mp3');
 
-    // Upgraded loop: 50 popups rapid-firing every 40ms
-    for (let i = 0; i < 165; i++) {
+    for (let i = 0; i < 100; i++) {
         setTimeout(() => {
-            const audio = new Audio('https://www.myinstants.com/media/sounds/windows-xp-error.mp3');
-            audio.volume = 1.0; // Kept slightly lower so 100 sounds don't blow out speakers!
-            audio.play().catch(() => {})
-            
+            // Light sound clone
+            const sound = baseAudio.cloneNode();
+            sound.volume = 0.15;
+            sound.play().catch(() => {});
+
             const popupId = 'hype-' + Date.now() + '-' + i;
             const text = compliments[Math.floor(Math.random() * compliments.length)];
             const color = colors[Math.floor(Math.random() * colors.length)];
             
-            // Random screen positioning & subtle tilted angles
-            const randomLeft = Math.floor(Math.random() * (window.innerWidth - 280));
-            const randomTop = Math.floor(Math.random() * (window.innerHeight - 200));
-            const randomRotate = Math.floor(Math.random() * 30) - 15; // -10deg to +10deg rotation
+            const randomLeft = Math.floor(Math.random() * (window.screen.availWidth - 280));
+            const randomTop = Math.floor(Math.random() * (window.screen.availHeight - 200));
+            const randomRotate = Math.floor(Math.random() * 30) - 15;
 
             const pop = document.createElement('div');
             pop.className = 'win';
@@ -1536,6 +1536,10 @@
             pop.style.transform = `rotate(${randomRotate}deg)`;
             pop.style.zIndex = ++zIndex;
             pop.style.border = `2px solid ${color}`;
+            
+            // GPU Performance boost
+            pop.style.willChange = 'transform';
+            pop.style.backfaceVisibility = 'hidden';
 
             pop.innerHTML = `
                 <div class="win-bar" style="background: ${color}; color: #000; font-weight: bold;">
@@ -1548,9 +1552,12 @@
                     ${text}
                 </div>`;
 
-            document.getElementById('os').appendChild(pop);
+            // Sync with display refresh rate
+            requestAnimationFrame(() => {
+                document.getElementById('os').appendChild(pop);
+            });
             wins[popupId] = pop;
-        }, i * 40); 
+        }, i * 20); 
     }
 }
 </script>

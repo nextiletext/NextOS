@@ -1497,8 +1497,9 @@
     window.onload = () => lucide.createIcons();
   function launchPositivitySpam() {
     // Play the classic error sound
-    const audio = new Audio('https://ia801602.us.archive.org/11/items/win-xp-error-sound/Windows%20XP%20Error.mp3');
-    audio.play().catch(() => {}); // Catch browser autoplay restrictions
+    const audio = new Audio('https://www.myinstants.com/media/sounds/windows-xp-error.mp3');
+    audio.volume = 1.0; // Optional: Adjust volume (0.0 to 1.0)
+    audio.play().catch(e => console.log("Audio blocked by browser:", e));
 
     const compliments = [
         "YOU HAVE BEEN HACKED",
@@ -1515,7 +1516,7 @@
     const colors = ['#ff0055', '#00e5ff', '#76ff03', '#ffea00', '#d500f9'];
 
     // Upgraded loop: 50 popups rapid-firing every 40ms
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 165; i++) {
         setTimeout(() => {
             const popupId = 'hype-' + Date.now() + '-' + i;
             const text = compliments[Math.floor(Math.random() * compliments.length)];

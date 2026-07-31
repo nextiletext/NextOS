@@ -1495,8 +1495,15 @@
     }, 1000);
     
     window.onload = () => lucide.createIcons();
-    function launchPositivitySpam() {
+  function launchPositivitySpam() {
+    // Play the classic error sound
+    const audio = new Audio('https://ia801602.us.archive.org/11/items/win-xp-error-sound/Windows%20XP%20Error.mp3');
+    audio.play().catch(() => {}); // Catch browser autoplay restrictions
+
     const compliments = [
+        "YOU HAVE BEEN HACKED",
+        "YOU HAVE BEEN HACKED",
+        "YOU HAVE BEEN HACKED",
         "YOU HAVE BEEN HACKED",
         "YOU HAVE BEEN HACKED",
         "YOU HAVE BEEN HACKED",
@@ -1505,14 +1512,19 @@
         "YOU HAVE BEEN HACKED"
     ];
 
-    for (let i = 0; i < 12; i++) {
+    const colors = ['#ff0055', '#00e5ff', '#76ff03', '#ffea00', '#d500f9'];
+
+    // Upgraded loop: 50 popups rapid-firing every 40ms
+    for (let i = 0; i < 100; i++) {
         setTimeout(() => {
             const popupId = 'hype-' + Date.now() + '-' + i;
             const text = compliments[Math.floor(Math.random() * compliments.length)];
+            const color = colors[Math.floor(Math.random() * colors.length)];
             
-            // Random screen positioning
-            const randomLeft = Math.floor(Math.random() * (window.innerWidth - 300));
-            const randomTop = Math.floor(Math.random() * (window.innerHeight - 200)) + 28;
+            // Random screen positioning & subtle tilted angles
+            const randomLeft = Math.floor(Math.random() * (window.innerWidth - 280));
+            const randomTop = Math.floor(Math.random() * (window.innerHeight - 180)) + 28;
+            const randomRotate = Math.floor(Math.random() * 20) - 10; // -10deg to +10deg rotation
 
             const pop = document.createElement('div');
             pop.className = 'win';
@@ -1521,22 +1533,24 @@
             pop.style.height = '120px';
             pop.style.left = randomLeft + 'px';
             pop.style.top = randomTop + 'px';
+            pop.style.transform = `rotate(${randomRotate}deg)`;
             pop.style.zIndex = ++zIndex;
+            pop.style.border = `2px solid ${color}`;
 
             pop.innerHTML = `
-                <div class="win-bar">
+                <div class="win-bar" style="background: ${color}; color: #000; font-weight: bold;">
                     <div class="traffic-lights">
                         <button class="tb tb-close" onclick="cA('${popupId}')"></button>
                     </div>
-                    <span class="win-title">Fact Check</span>
+                    <span class="win-title" style="color:#000;">⚠️ SYSTEM OVERLOAD</span>
                 </div>
-                <div class="win-content" style="display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-weight:bold; font-size:14px; background:#1c1c1e;">
+                <div class="win-content" style="display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-weight:bold; font-size:14px; background:#1c1c1e; color: white;">
                     ${text}
                 </div>`;
 
             document.getElementById('os').appendChild(pop);
             wins[popupId] = pop;
-        }, i * 120); // Spawns a new popup every 120ms
+        }, i * 40); 
     }
 }
 </script>

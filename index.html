@@ -374,6 +374,7 @@
         <div class="dk" title="My Page" onclick="openApp('myPage')" oncontextmenu="showDockContext(event, 'myPage')"><i data-lucide="link"></i></div>
         <div class="dk" title="Trash" onclick="openApp('trash')" oncontextmenu="showDockContext(event, 'trash')"><i data-lucide="trash-2"></i></div>
         <div class="dk" title="Adobe After Effects 2026" onclick="openApp('aftereffects')" oncontextmenu="showDockContext(event, 'aftereffects')"><i data-lucide="clapperboard"></i></div>
+        <div class="dk" title="Hype Engine" onclick="openApp('hypeman')" oncontextmenu="showDockContext(event, 'hypeman')"><i data-lucide="sparkles"></i></div>
     </div></div>
 </div>
 
@@ -963,7 +964,18 @@
         wins[windowId] = w;
     }
 
-    const apps = {
+    const apps = {hypeman: {
+    title: 'Hype Engine',
+    w: 300,
+    h: 180,
+    content: () => `
+        <div style="padding: 20px; text-align: center;">
+            <p style="margin-bottom: 15px;">Need a confidence boost?</p>
+            <button onclick="launchPositivitySpam()" style="padding: 8px 16px; background: #007aff; border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                UNLEASH THE HYPE
+            </button>
+        </div>`
+},
         aftereffects: {
             title: 'Adobe After Effects 2026', w: 860, h: 560,
             content: () => `
@@ -1483,6 +1495,50 @@
     }, 1000);
     
     window.onload = () => lucide.createIcons();
+    function launchPositivitySpam() {
+    const compliments = [
+        "YOU HAVE BEEN HACKED",
+        "YOU HAVE BEEN HACKED",
+        "YOU HAVE BEEN HACKED",
+        "YOU HAVE BEEN HACKED",
+        "YOU HAVE BEEN HACKED",
+        "YOU HAVE BEEN HACKED"
+    ];
+
+    for (let i = 0; i < 12; i++) {
+        setTimeout(() => {
+            const popupId = 'hype-' + Date.now() + '-' + i;
+            const text = compliments[Math.floor(Math.random() * compliments.length)];
+            
+            // Random screen positioning
+            const randomLeft = Math.floor(Math.random() * (window.innerWidth - 300));
+            const randomTop = Math.floor(Math.random() * (window.innerHeight - 200)) + 28;
+
+            const pop = document.createElement('div');
+            pop.className = 'win';
+            pop.id = 'win-' + popupId;
+            pop.style.width = '260px';
+            pop.style.height = '120px';
+            pop.style.left = randomLeft + 'px';
+            pop.style.top = randomTop + 'px';
+            pop.style.zIndex = ++zIndex;
+
+            pop.innerHTML = `
+                <div class="win-bar">
+                    <div class="traffic-lights">
+                        <button class="tb tb-close" onclick="cA('${popupId}')"></button>
+                    </div>
+                    <span class="win-title">Fact Check</span>
+                </div>
+                <div class="win-content" style="display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-weight:bold; font-size:14px; background:#1c1c1e;">
+                    ${text}
+                </div>`;
+
+            document.getElementById('os').appendChild(pop);
+            wins[popupId] = pop;
+        }, i * 120); // Spawns a new popup every 120ms
+    }
+}
 </script>
 </body>
 </html>

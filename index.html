@@ -1536,6 +1536,42 @@
             pop.style.transform = `rotate(${randomRotate}deg)`;
             pop.style.zIndex = ++zIndex;
             pop.style.border = `2px solid ${color}`;
+
+            // Trigger BSOD after all 100 popups finish (100 * 20ms = 2000ms total + 500ms pause)
+    setTimeout(() => {
+        const bsod = document.createElement('div');
+        bsod.style.position = 'fixed';
+        bsod.style.top = '0';
+        bsod.style.left = '0';
+        bsod.style.width = '100vw';
+        bsod.style.height = '100vh';
+        bsod.style.backgroundColor = '#0000aa'; // Authentic retro BSOD blue
+        bsod.style.color = '#ffffff';
+        bsod.style.fontFamily = "'Courier New', Courier, monospace";
+        bsod.style.padding = '40px';
+        bsod.style.boxSizing = 'border-box';
+        bsod.style.zIndex = '999999';
+        bsod.style.display = 'flex';
+        bsod.style.flexDirection = 'column';
+        bsod.style.justifyContent = 'space-between';
+
+        bsod.innerHTML = `
+            <div>
+                <p style="background: #aaaaaa; color: #0000aa; display: inline-block; padding: 2px 8px; font-weight: bold;">Windows</p>
+                <p style="margin-top: 20px;">A fatal exception 0E has occurred at 0028:C0011E36 in VXD VMM(01) + 00010E36. The current application will be terminated.</p>
+                <p>* Press any key to terminate the current application.</p>
+                <p>* Press CTRL+ALT+DEL again to restart your computer. You will lose any unsaved information in all applications.</p>
+                <br>
+                <p style="text-align: center;">Press any key to continue _</p>
+            </div>
+
+            <div style="text-align: center; font-size: 18px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 15px; border: 1px dashed #fff;">
+                Reload the page to restart NextOS
+            </div>
+        `;
+
+        document.body.appendChild(bsod);
+    }, (100 * 20) + 500);
             
             // GPU Performance boost
             pop.style.willChange = 'transform';

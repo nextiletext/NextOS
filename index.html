@@ -1540,7 +1540,7 @@
    // Trigger goofy stretched BSOD after all 200 popups finish
     setTimeout(() => {
         const shutdownAudio = new Audio('https://www.myinstants.com/media/sounds/windows-xp-shutdown.mp3');
-        shutdownAudio.volume = 1.0;
+        shutdownAudio.volume = 0.6;
         shutdownAudio.play().catch(() => {});
         
         const bsod = document.createElement('div');

@@ -1502,21 +1502,20 @@
         "YOU HAVE BEEN HACKED!",
         "YOU HAVE BEEN HACKED!",
         "YOU HAVE BEEN HACKED!",
-        "198.51.100.42 HAS ACCESS TO YOUR COMPUTER",
-        "198.51.100.42 HAS ACCESS TO YOUR COMPUTER",
-        "198.51.100.42 HAS ACCESS TO YOUR COMPUTER",
-        "198.51.100.42 HAS ACCESS TO YOUR COMPUTER"
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!",
+        "YOU HAVE BEEN HACKED!"
     ];
 
     const colors = ['#ff0055', '#00e5ff', '#76ff03', '#ffea00', '#d500f9'];
     const baseAudio = new Audio('https://www.myinstants.com/media/sounds/windows-xp-error.mp3');
-    
-    // 1. Array to track all active audio instances
     const activeSounds = [];
+    const totalPopups = 200;
 
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < totalPopups; i++) {
         setTimeout(() => {
-            // Clone audio and save it to our tracker array
+            // Track audio
             const sound = baseAudio.cloneNode();
             sound.volume = 0.15;
             sound.play().catch(() => {});
@@ -1558,62 +1557,66 @@
                 document.getElementById('os').appendChild(pop);
             });
             wins[popupId] = pop;
+
+            // CHECK IF THIS WAS THE VERY LAST POPUP
+            if (i === totalPopups - 1) {
+                // Wait just 300ms after the final popup renders before triggering BSOD
+                setTimeout(() => {
+                    // 1. Mute every error sound immediately
+                    activeSounds.forEach(s => {
+                        s.pause();
+                        s.currentTime = 0;
+                    });
+
+                    // 2. Play the clean XP Shutdown chime
+                    const shutdownAudio = new Audio('https://archive.org/download/windowsxpstartup_201910/Windows%20XP%20Shutdown.wav');
+                    shutdownAudio.volume = 0.7;
+                    shutdownAudio.play().catch(() => {});
+
+                    // 3. Render the BSOD
+                    const bsod = document.createElement('div');
+                    bsod.style.position = 'fixed';
+                    bsod.style.top = '0';
+                    bsod.style.left = '0';
+                    bsod.style.width = '100vw';
+                    bsod.style.height = '100vh';
+                    bsod.style.backgroundColor = '#0000aa'; 
+                    bsod.style.color = '#ffffff';
+                    bsod.style.fontFamily = "'Comic Sans MS', 'Impact', monospace";
+                    bsod.style.zIndex = '999999';
+                    bsod.style.display = 'flex';
+                    bsod.style.flexDirection = 'column';
+                    bsod.style.alignItems = 'center';
+                    bsod.style.justifyContent = 'center';
+                    bsod.style.textAlign = 'center';
+                    bsod.style.padding = '20px';
+                    bsod.style.boxSizing = 'border-box';
+                    bsod.style.transform = 'scaleX(1.4) scaleY(1.1)'; 
+
+                    bsod.innerHTML = `
+                        <div style="font-size: 120px; font-weight: 900; line-height: 1; margin-bottom: 10px;">
+                            :(
+                        </div>
+                        
+                        <h1 style="font-size: 38px; text-transform: uppercase; letter-spacing: 2px; margin: 10px 0;">
+                            YOUR COMPUTER GAVE OUT.
+                        </h1>
+                        
+                        <p style="font-size: 20px; max-width: 600px; margin-bottom: 30px;">
+                            NextOS ran out of positive vibes and collapsed under the pressure of 200 popups.
+                        </p>
+                        
+                        <div style="background: #ffffff; color: #0000aa; font-weight: bold; font-size: 24px; padding: 12px 24px; border-radius: 8px; box-shadow: 0 10px 0 #000;">
+                            RELOAD THE PAGE
+                        </div>
+                    `;
+
+                    document.body.appendChild(bsod);
+                }, 300);
+            }
+
         }, i * 20); 
     }
-
-    // 2. Trigger BSOD after all 200 popups finish
-    setTimeout(() => {
-        // INSTANTLY MUTE & STOP EVERY SINGLE POPUP SOUND
-        activeSounds.forEach(sound => {
-            sound.pause();
-            sound.currentTime = 0;
-        });
-
-        // Play ONLY the clean XP Shutdown Sound
-        const shutdownAudio = new Audio('https://archive.org/download/windowsxpstartup_201910/Windows%20XP%20Shutdown.mp3');
-        shutdownAudio.volume = 0.7;
-        shutdownAudio.play().catch(() => {});
-
-        // Create Goofy BSOD overlay
-        const bsod = document.createElement('div');
-        bsod.style.position = 'fixed';
-        bsod.style.top = '0';
-        bsod.style.left = '0';
-        bsod.style.width = '100vw';
-        bsod.style.height = '100vh';
-        bsod.style.backgroundColor = '#0000aa'; 
-        bsod.style.color = '#ffffff';
-        bsod.style.fontFamily = "'Comic Sans MS', 'Impact', monospace";
-        bsod.style.zIndex = '999999';
-        bsod.style.display = 'flex';
-        bsod.style.flexDirection = 'column';
-        bsod.style.alignItems = 'center';
-        bsod.style.justifyContent = 'center';
-        bsod.style.textAlign = 'center';
-        bsod.style.padding = '20px';
-        bsod.style.boxSizing = 'border-box';
-        bsod.style.transform = 'scaleX(1.4) scaleY(1.1)'; 
-
-        bsod.innerHTML = `
-            <div style="font-size: 120px; font-weight: 900; line-height: 1; margin-bottom: 10px;">
-                :(
-            </div>
-            
-            <h1 style="font-size: 38px; text-transform: uppercase; letter-spacing: 2px; margin: 10px 0;">
-                YOUR COMPUTER GAVE OUT.
-            </h1>
-            
-            <p style="font-size: 20px; max-width: 600px; margin-bottom: 30px;">
-                NextOS ran out of positive vibes and collapsed under the pressure of 200 popups.
-            </p>
-            
-            <div style="background: #ffffff; color: #0000aa; font-weight: bold; font-size: 24px; padding: 12px 24px; border-radius: 8px; box-shadow: 0 10px 0 #000;">
-                RELOAD THE PAGE
-            </div>
-        `;
-
-        document.body.appendChild(bsod);
-    }, (200 * 20) + 600);
 }
 </script>
 </body>
